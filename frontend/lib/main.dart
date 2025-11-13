@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screen/dashboard.dart'; // pastikan path-nya sesuai
+import 'screen/login.dart'; // ganti import ke login.dart
 
 void main() {
   runApp(const MyApp());
@@ -12,9 +12,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Dashboard Example',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const DashboardScreen(),
+      title: 'Warehouse Management System',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+      ),
+      home: const LoginPage(), // ubah dari DashboardScreen() ke LoginPage()
     );
   }
 }
