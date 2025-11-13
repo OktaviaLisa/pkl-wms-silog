@@ -37,10 +37,15 @@ class DashboardScreen extends StatelessWidget {
                 Row(
                   children: [
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // 🔹 Arahkan ke halaman Register
+                        Navigator.pushNamed(context, '/register');
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color.fromARGB(255, 150, 17, 7),
-                        side: const BorderSide(color:  const Color.fromARGB(255, 150, 17, 7)),
+                        side: const BorderSide(
+                          color: Color.fromARGB(255, 150, 17, 7),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -49,9 +54,12 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // 🔹 Navigasi ke halaman Login
+                        Navigator.pushNamed(context, '/login');
+                      },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:  const Color.fromARGB(255, 150, 17, 7),
+                        backgroundColor: const Color.fromARGB(255, 150, 17, 7),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -85,7 +93,7 @@ class DashboardScreen extends StatelessWidget {
                         Text(
                           'Warehouses Management\nSystem',
                           style: TextStyle(
-                            color:  const Color.fromARGB(255, 150, 17, 7),
+                            color: Color.fromARGB(255, 150, 17, 7),
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
