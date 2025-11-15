@@ -2,6 +2,8 @@ package main
 
 import (
 	"backend/config"
+	"backend/handlers"
+	"backend/routes"
 
 	"time"
 
@@ -10,14 +12,15 @@ import (
 )
 
 func main() {
-	// 1. Konek database
-	config.ConnectDatabase()
 
-	// 2. Siapkan router
+	db := config.ConnectDatabase()
+
+	h := handlers.NewHandler(db)
+
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:52828", "http://localhost:5173", "*"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -25,11 +28,12 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 3. Contoh endpoint sederhana
+	// pake routes dari folder routes
+	routes.SetupRoutes(r, h)
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	// 4. Jalankan server
 	r.Run(":8081")
 }

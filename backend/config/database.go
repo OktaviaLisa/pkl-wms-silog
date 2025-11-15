@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -9,16 +10,19 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase() {
-	// Format DSN MySQL/MariaDB:
-	// user:password@tcp(host:port)/nama_db?charset=utf8mb4&parseTime=True&loc=Local
+// ConnectDatabase membuka koneksi DB dan mengembalikan *gorm.DB
+func ConnectDatabase() *gorm.DB {
+
+	// Format DSN MySQL/MariaDB
 	dsn := "root:@tcp(127.0.0.1:3306)/pkl_wms?charset=utf8mb4&parseTime=True&loc=Local"
 
-	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("❌ Gagal konek ke database: " + err.Error())
+		log.Fatal("❌ Gagal konek ke database: ", err)
 	}
 
-	DB = database
+	DB = db
 	fmt.Println("✅ Koneksi MariaDB berhasil!")
+
+	return DB
 }
