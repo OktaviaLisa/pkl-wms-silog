@@ -22,6 +22,10 @@ func SetupRoutes(h *Handler) *gin.Engine {
 
 	api := r.Group("/api")
 	{
+		login := api.Group("/auth")
+		{
+			login.POST("/login", h.WMS.Login)
+		}
 		user := api.Group("/user")
 		{
 			user.GET("/user", h.WMS.GetUser)

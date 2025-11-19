@@ -46,7 +46,39 @@ class ApiService {
   }
 
   //---------------------------------------------------------
-  // 3. CREATE USER → Register user baru
+  // 3. LOGIN → Validasi username dan password
+  //---------------------------------------------------------
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/auth/login");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return data; // { "message": "Login berhasil", "user": {...} }
+      } else {
+        throw Exception(data["error"] ?? "Login gagal");
+      }
+    } catch (e) {
+      print("ERROR API LOGIN: $e");
+      rethrow;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 4. CREATE USER → Register user baru
   //---------------------------------------------------------
   Future<Map<String, dynamic>> createUser({
     required String email,

@@ -35,6 +35,43 @@ func (h *WMSHandler) GetUser(c *gin.Context) {
 	})
 }
 
+func (h *WMSHandler) Login(c *gin.Context) {
+	var loginData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&loginData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Data tidak valid"})
+		return
+	}
+
+	if loginData.Username == "" || loginData.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username dan password harus diisi"})
+		return
+	}
+
+	// Cari user berdasarkan username
+	var user models.Users
+	if err := h.db.Where("username = ?", loginData.Username).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
+		return
+	}
+
+	// Verifikasi password
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
+		return
+	}
+
+	// Login berhasil
+	user.Password = "" // Jangan return password
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login berhasil",
+		"user":    user,
+	})
+}
+
 func (h *WMSHandler) CreateUser(c *gin.Context) {
 	var user models.Users
 

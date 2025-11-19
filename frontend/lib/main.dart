@@ -3,6 +3,7 @@ import 'services/api_service.dart';
 import 'screen/dashboard.dart'; 
 import 'screen/login.dart';    
 import 'screen/register.dart';
+import 'screen/inventory.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/inventory' : (context) => const InventoryPage(),
       },
     );
   }
