@@ -4,6 +4,7 @@ import 'screen/dashboard.dart';
 import 'screen/login.dart';    
 import 'screen/register.dart';
 import 'screen/inventory.dart';
+import 'screen/inbound_stock.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/inventory' : (context) => const InventoryPage(),
+        '/inbound_stock' : (context) => const InboundPage(),
       },
     );
   }

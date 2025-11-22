@@ -110,4 +110,89 @@ class ApiService {
       rethrow;
     }
   }
+  //---------------------------------------------------------
+  // 5. GET INBOUND LIST → Ambil semua data inbound_stock
+  //---------------------------------------------------------
+  Future<List<dynamic>> getInbound() async {
+    final url = Uri.parse("$baseUrl/api/inbound/list");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"]; // Sesuai format backend { "data": [...] }
+      } else {
+        throw Exception("Failed to load inbound stock");
+      }
+    } catch (e) {
+      print("ERROR API GET INBOUND: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> createInbound(Map<String, dynamic> data) async {
+    final url = Uri.parse("$baseUrl/api/inbound/create");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Gagal menyimpan inbound");
+      }
+    } catch (e) {
+      print("ERROR API CREATE INBOUND WITH NAMES: $e");
+      rethrow;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 6. GET PRODUK → Ambil data produk untuk dropdown
+  //---------------------------------------------------------
+  Future<List<dynamic>> getProduk() async {
+    final url = Uri.parse("$baseUrl/api/produk/list");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load produk");
+      }
+    } catch (e) {
+      print("ERROR API GET PRODUK: $e");
+      rethrow;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 7. GET GUDANG → Ambil data gudang untuk dropdown
+  //---------------------------------------------------------
+  Future<List<dynamic>> getGudang() async {
+    final url = Uri.parse("$baseUrl/api/gudang/list");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load gudang");
+      }
+    } catch (e) {
+      print("ERROR API GET GUDANG: $e");
+      rethrow;
+    }
+  }
+
 }
