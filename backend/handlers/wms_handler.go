@@ -52,24 +52,27 @@ func (h *WMSHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Cari user berdasarkan username
 	var user models.Users
-	if err := h.db.Where("username = ?", loginData.Username).First(&user).Error; err != nil {
+	if err := h.db.Preload("Gudang").Where("username = ?", loginData.Username).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
 		return
 	}
 
-	// Verifikasi password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
 		return
 	}
 
-	// Login berhasil
-	user.Password = "" // Jangan return password
+	namaGudang := ""
+	if user.Gudang.NamaGudang != "" {
+		namaGudang = user.Gudang.NamaGudang
+	}
+
+	user.Password = ""
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil",
-		"user":    user,
+		"message":     "Login berhasil",
+		"user":        user,
+		"nama_gudang": namaGudang,
 	})
 }
 
@@ -126,49 +129,93 @@ func (h *WMSHandler) CreateUser(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetInboundStock(c *gin.Context) {
-	fmt.Println("📋 GET /api/inbound/list dipanggil")
+	userID := c.Query("user_id")
+	fmt.Printf("🔍 GetInboundStock dipanggil dengan user_id: %s\n", userID)
 
+	if userID == "" {
+		// Tampilkan semua data jika tidak ada user_id
+		var inboundStocks []models.Inbound_Stock
+		result := h.db.
+			Preload("Produk").
+			Preload("GudangAsal").
+			Preload("GudangTujuan").
+			Find(&inboundStocks)
+
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+			return
+		}
+
+		var response []map[string]interface{}
+		for _, item := range inboundStocks {
+			response = append(response, map[string]interface{}{
+				"idInbound":          item.IdInbound,
+				"idProduk":           item.IdProduk,
+				"gudang_asal":        item.GudangAsalId,
+				"gudang_tujuan":      item.GudangTujuanId,
+				"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
+				"deskripsi":          item.Deskripsi,
+				"nama_produk":        item.Produk.NamaProduk,
+				"nama_gudang_asal":   item.GudangAsal.NamaGudang,
+				"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": response})
+		return
+	}
+
+	// Cek user ada atau tidak
+	var user models.Users
+	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
+		fmt.Printf("❌ User dengan ID %s tidak ditemukan: %v\n", userID, err)
+		
+		// Tampilkan daftar user yang ada untuk debugging
+		var allUsers []models.Users
+		h.db.Find(&allUsers)
+		fmt.Printf("📋 Daftar user yang ada:\n")
+		for _, u := range allUsers {
+			fmt.Printf("   - ID: %d, Username: %s, RoleGudang: %d\n", u.IDUser, u.Username, u.RoleGudang)
+		}
+		
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
+
+	// Filter berdasarkan gudang_tujuan = role_gudang user
 	var inboundStocks []models.Inbound_Stock
-
 	result := h.db.
 		Preload("Produk").
 		Preload("GudangAsal").
 		Preload("GudangTujuan").
+		Where("gudang_tujuan = ?", user.RoleGudang).
 		Find(&inboundStocks)
 
 	if result.Error != nil {
-		fmt.Printf("❌ Database error: %v\n", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
-	fmt.Printf("✅ Ditemukan %d data inbound\n", len(inboundStocks))
+	fmt.Printf("📦 Ditemukan %d data inbound untuk gudang %d\n", len(inboundStocks), user.RoleGudang)
 
-	// Transform data untuk frontend
 	var response []map[string]interface{}
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
-			"idInbound":     item.IdInbound,
-			"idProduk":      item.IdProduk,
-			"tanggal_masuk": item.TanggalMasuk.Format("2006-01-02"),
-			"deskripsi":     item.Deskripsi,
-			"produk": map[string]interface{}{
-				"nama_produk": item.Produk.NamaProduk,
-			},
-			"gudang_asal": map[string]interface{}{
-				"nama_gudang": item.GudangAsal.NamaGudang,
-			},
-			"gudang_tujuan": map[string]interface{}{
-				"nama_gudang": item.GudangTujuan.NamaGudang,
-			},
+			"idInbound":          item.IdInbound,
+			"idProduk":           item.IdProduk,
+			"gudang_asal":        item.GudangAsalId,
+			"gudang_tujuan":      item.GudangTujuanId,
+			"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
+			"deskripsi":          item.Deskripsi,
+			"nama_produk":        item.Produk.NamaProduk,
+			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
+			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
 		})
 	}
 
-	fmt.Printf("📤 Mengirim response dengan %d items\n", len(response))
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Inbound stock retrieved successfully",
-		"data":    response,
-	})
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
 func (h *WMSHandler) GetProduk(c *gin.Context) {
