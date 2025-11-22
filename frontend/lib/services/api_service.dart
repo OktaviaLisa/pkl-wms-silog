@@ -113,15 +113,19 @@ class ApiService {
   //---------------------------------------------------------
   // 5. GET INBOUND LIST → Ambil semua data inbound_stock
   //---------------------------------------------------------
-  Future<List<dynamic>> getInbound() async {
-    final url = Uri.parse("$baseUrl/api/inbound/list");
+  Future<List<dynamic>> getInbound({int? userId}) async {
+    String urlString = "$baseUrl/api/inbound/list";
+    if (userId != null) {
+      urlString += "?user_id=$userId";
+    }
+    final url = Uri.parse(urlString);
 
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data["data"]; // Sesuai format backend { "data": [...] }
+        return data["data"];
       } else {
         throw Exception("Failed to load inbound stock");
       }

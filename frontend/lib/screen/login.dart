@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -34,6 +35,14 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (result["message"] == "Login berhasil") {
+        // Simpan user ID ke SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('user_id', result['user']['idUser']);
+        await prefs.setString('username', result['user']['username']);
+        await prefs.setString('nama_gudang', result['nama_gudang'] ?? '');
+        
+        print('✅ User login berhasil: ID=${result['user']['idUser']}, Username=${result['user']['username']}');
+        
         Navigator.pushReplacementNamed(context, '/dashboard_user');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

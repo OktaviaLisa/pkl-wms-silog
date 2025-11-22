@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
-import 'input_inbound.dart';  // sesuaikan nama file halaman input
+import 'input_inbound.dart';
 
 class InboundPage extends StatefulWidget {
   const InboundPage({super.key});
@@ -12,11 +13,31 @@ class InboundPage extends StatefulWidget {
 class _InboundPageState extends State<InboundPage> {
   final ApiService api = ApiService();
   late Future<List<dynamic>> futureInbound;
+  int? currentUserId;
 
   @override
   void initState() {
     super.initState();
-    futureInbound = api.getInbound();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    currentUserId = prefs.getInt('user_id');
+    
+    print('🔍 Loading inbound data untuk user ID: $currentUserId');
+    
+    if (currentUserId != null) {
+      setState(() {
+        futureInbound = api.getInbound(userId: currentUserId);
+      });
+    } else {
+      print('⚠️ User belum login, redirect ke login page');
+      // Redirect ke login atau tampilkan pesan
+      setState(() {
+        futureInbound = Future.value([]);
+      });
+    }
   }
 
   @override
@@ -82,7 +103,7 @@ class _InboundPageState extends State<InboundPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              "Nama Produk: ${item["produk"]["nama_produk"]}",
+                              "Nama Produk: ${item["nama_produk"]}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -95,8 +116,8 @@ class _InboundPageState extends State<InboundPage> {
                       const SizedBox(height: 10),
 
                       // DETAIL
-                      Text("Gudang Asal: ${item["gudang_asal"]["nama_gudang"]}"),
-                      Text("Gudang Tujuan: ${item["gudang_tujuan"]["nama_gudang"]}"),
+                      Text("Gudang Asal: ${item["nama_gudang_asal"]}"),
+                      Text("Gudang Tujuan: ${item["nama_gudang_tujuan"]}"),
                       Text("Tanggal Masuk: ${item["tanggal_masuk"]}"),
                       Text("Deskripsi: ${item["deskripsi"]}"),
                     ],
