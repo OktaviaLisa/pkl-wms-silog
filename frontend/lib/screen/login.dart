@@ -71,7 +71,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Image.asset(
                     "lib/assets/images/warehouses.jpg",
-                    fit: BoxFit.cover, // memastikan gambar full cover
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity, 
                   ),
                 ),
               ),
