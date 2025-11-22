@@ -31,6 +31,19 @@ func SetupRoutes(h *Handler) *gin.Engine {
 			user.GET("/user", h.WMS.GetUser)
 			user.POST("/user", h.WMS.CreateUser)
 		}
+		inbound := api.Group("/inbound")
+		{
+			inbound.GET("/list", h.WMS.GetInboundStock)
+			inbound.POST("/create", h.WMS.CreateInbound)
+		}
+		produk := api.Group("/produk")
+		{
+			produk.GET("/list", h.WMS.GetProduk)
+		}
+		gudang := api.Group("/gudang")
+		{
+			gudang.GET("/list", h.WMS.GetGudang)
+		}
 	}
 
 	return r
