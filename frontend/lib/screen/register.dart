@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // pastikan ini path-nya sesuai
+import '../services/api_service.dart'; 
+import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -98,18 +99,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: Colors.black.withOpacity(0.4),
-                    ),
-                    child: const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Daftarkan Akunmu!\n\ndan bergabung dengan tim WMS 🚚',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          height: 1.4,
-                        ),
-                      ),
                     ),
                   ),
                 ),
@@ -232,7 +221,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         const Text('Sudah punya akun? '),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(context, '/login');
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                          );
                           },
                           child: const Text(
                             'Masuk',

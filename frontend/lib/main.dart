@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'screen/dashboard.dart'; 
-import 'screen/login.dart';    
+import 'screen/login.dart';
+import 'screen/admin.dart';    
 import 'screen/register.dart';
 import 'screen/inventory.dart';
 import 'screen/inbound_stock.dart';
@@ -21,12 +22,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // 🔹 Sekarang yang pertama tampil adalah Dashboard
-      home: const DashboardScreen(),
+
+      home: const LoginPage(),
       // 🔹 Rute untuk navigasi ke halaman login
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/admin_dashboard': (context) => const AdminDashboard(),
+        '/dashboard_user': (context) => const DashboardScreen(),
         '/inventory' : (context) => const InventoryPage(),
         '/inbound_stock' : (context) => const InboundPage(),
       },
