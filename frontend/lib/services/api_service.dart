@@ -199,4 +199,35 @@ class ApiService {
     }
   }
 
+  //---------------------------------------------------------
+  // 8. CREATE GUDANG → Tambah gudang baru
+  //---------------------------------------------------------
+  Future<bool> createGudang({
+    required String namaGudang,
+    required String alamatGudang,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/gudang/create");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "nama_gudang": namaGudang,
+          "alamat": alamatGudang,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Gagal membuat gudang");
+      }
+    } catch (e) {
+      print("ERROR API CREATE GUDANG: $e");
+      rethrow;
+    }
+  }
+
 }

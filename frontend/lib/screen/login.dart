@@ -40,8 +40,9 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setInt('user_id', result['user']['idUser']);
         await prefs.setString('username', result['user']['username']);
         await prefs.setString('nama_gudang', result['nama_gudang'] ?? '');
+        await prefs.setInt('role_gudang', result['user']['role_gudang'] ?? 0);
         
-        print('✅ User login berhasil: ID=${result['user']['idUser']}, Username=${result['user']['username']}');
+        print('✅ User login berhasil: ID=${result['user']['idUser']}, Username=${result['user']['username']}, Role Gudang=${result['user']['role_gudang']}');
         
         Navigator.pushReplacementNamed(context, '/dashboard_user');
       } else {
