@@ -169,7 +169,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	var user models.Users
 	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
 		fmt.Printf("❌ User dengan ID %s tidak ditemukan: %v\n", userID, err)
-		
+
 		// Tampilkan daftar user yang ada untuk debugging
 		var allUsers []models.Users
 		h.db.Find(&allUsers)
@@ -177,7 +177,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		for _, u := range allUsers {
 			fmt.Printf("   - ID: %d, Username: %s, RoleGudang: %d\n", u.IDUser, u.Username, u.RoleGudang)
 		}
-		
+
 		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
 		return
 	}
@@ -351,5 +351,24 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Inbound berhasil dibuat dengan data baru",
 		"data":    inbound,
+	})
+}
+
+func (h *WMSHandler) CreateGudang(c *gin.Context) {
+	var gudang models.Gudang
+
+	if err := c.ShouldBindJSON(&gudang); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.db.Create(&gudang).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat gudang"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Gudang berhasil dibuat",
+		"data":    gudang,
 	})
 }

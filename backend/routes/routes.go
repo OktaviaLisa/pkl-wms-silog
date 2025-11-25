@@ -16,6 +16,7 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.POST("/api/inbound/create", h.WMS.CreateInbound)
 	r.GET("/api/produk/list", h.WMS.GetProduk)
 	r.GET("/api/gudang/list", h.WMS.GetGudang)
+	r.POST("/api/gudang/create", h.WMS.CreateGudang)
 
 	// tambah routes kamu lainnya di sini
 }
