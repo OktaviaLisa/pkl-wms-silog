@@ -4,9 +4,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static const String baseUrl = "http://localhost:8081";
 
-  //---------------------------------------------------------
   // 1. PING SERVER → cek apakah backend aktif
-  //---------------------------------------------------------
   Future<String> pingServer() async {
     final url = Uri.parse("$baseUrl/ping");
 
@@ -24,10 +22,8 @@ class ApiService {
     }
   }
 
-  //---------------------------------------------------------
   // 2. GET USERS → Ambil data user dari backend
-  //---------------------------------------------------------
-  Future<List<dynamic>> getUsers() async {
+  Future<List<dynamic>> getAllUsers() async {
     final url = Uri.parse("$baseUrl/api/user/user");
 
     try {
@@ -43,6 +39,11 @@ class ApiService {
       print("ERROR API GET USERS: $e");
       rethrow;
     }
+  }
+
+  // Tambahan khusus untuk register.dart supaya error getUsers hilang
+  Future<List<dynamic>> getUsers() async {
+    return await getAllUsers(); // alias tanpa merubah struktur
   }
 
   //---------------------------------------------------------
@@ -64,7 +65,7 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return data; // { "message": "Login berhasil", "user": {...} }
+        return data;
       } else {
         throw Exception(data["error"] ?? "Login gagal");
       }
@@ -74,39 +75,39 @@ class ApiService {
     }
   }
 
-  //---------------------------------------------------------
   // 4. CREATE USER → Register user baru
-  //---------------------------------------------------------
-  Future<Map<String, dynamic>> createUser({
-    required String email,
-    required String username,
-    required String password,
-  }) async {
-    final url = Uri.parse("$baseUrl/api/user/user");
+Future<Map<String, dynamic>> createUser({
+  required String email,
+  required String username,
+  required String password,
+  required int roleGudang,   // <<< WAJIB INTEGER
+}) async {
+  final url = Uri.parse("$baseUrl/api/user/user");
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "username": username,
-          "password": password,
-        }),
-      );
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "username": username,
+        "password": password,
+        "role_gudang": roleGudang,  
+      }),
+    );
 
-      final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return data; // { "message": "...", "data": {...} }
-      } else {
-        throw Exception(data["error"] ?? "Gagal membuat user");
-      }
-    } catch (e) {
-      print("ERROR API CREATE USER: $e");
-      rethrow;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return data;
+    } else {
+      throw Exception(data["error"] ?? "Gagal membuat user");
     }
+  } catch (e) {
+    print("ERROR API CREATE USER: $e");
+    rethrow;
   }
+}
 
   //---------------------------------------------------------
   // 5. GET INBOUND LIST → Ambil semua data inbound_stock
@@ -250,7 +251,7 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode(data), // cukup satu body saja
+        body: jsonEncode(data),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -261,7 +262,7 @@ class ApiService {
       }
     } catch (e) {
       print("ERROR API CREATE OUTBOUND: $e");
-      rethrow; // biar error dilempar ke UI
+      rethrow;
     }
   }
 
