@@ -42,7 +42,12 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/register');
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color.fromARGB(255, 150, 17, 7),
+                          foregroundColor: const Color.fromARGB(
+                            255,
+                            150,
+                            17,
+                            7,
+                          ),
                           side: const BorderSide(
                             color: Color.fromARGB(255, 150, 17, 7),
                           ),
@@ -58,7 +63,12 @@ class DashboardScreen extends StatelessWidget {
                           Navigator.pushNamed(context, '/login');
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 150, 17, 7),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            150,
+                            17,
+                            7,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -70,7 +80,7 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -128,49 +138,73 @@ class DashboardScreen extends StatelessWidget {
 
             const SizedBox(height: 50),
 
-           // ===== FEATURE CARDS SECTION =====
-      Container(
-        width: double.infinity,
-        color: const Color(0xFF960B07),
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-        child: Column(
-          children: [
-            const Text(
-              'Warehouses Management System',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // === SINGLE ROW SCROLLABLE ===
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+            // ===== FEATURE CARDS SECTION =====
+            Container(
+              width: double.infinity,
+              color: const Color(0xFF960B07),
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              child: Column(
                 children: [
-                  _buildFeatureCard(context, "Inventory", Icons.inventory, '/inventory'),
-                  const SizedBox(width: 20),
+                  const Text(
+                    'Warehouses Management System',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
 
-                  _buildFeatureCard(context, "Quality Control", Icons.verified, '/quality_control'),
-                  const SizedBox(width: 20),
+                  // === SINGLE ROW SCROLLABLE ===
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFeatureCard(
+                          context,
+                          "Inventory",
+                          Icons.inventory,
+                          '/inventory',
+                        ),
+                        const SizedBox(width: 20),
 
-                  _buildFeatureCard(context, "Inbound Stock", Icons.arrow_downward, '/inbound_stock'),
-                  const SizedBox(width: 20),
+                        _buildFeatureCard(
+                          context,
+                          "Quality Control",
+                          Icons.verified,
+                          '/quality_control',
+                        ),
+                        const SizedBox(width: 20),
 
-                  _buildFeatureCard(context, "Outbound Stock", Icons.arrow_upward, '/outbound_stock'),
-                  const SizedBox(width: 20),
+                        _buildFeatureCard(
+                          context,
+                          "Inbound Stock",
+                          Icons.arrow_downward,
+                          '/inbound_stock',
+                        ),
+                        const SizedBox(width: 20),
 
-                  _buildFeatureCard(context, "Retur", Icons.assignment_return, '/retur'),
+                        _buildFeatureCard(
+                          context,
+                          "Outbound Stock",
+                          Icons.arrow_upward,
+                          '/outbound_stock',
+                        ),
+                        const SizedBox(width: 20),
+
+                        _buildFeatureCard(
+                          context,
+                          "Retur",
+                          Icons.assignment_return,
+                          '/retur',
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-
 
             // ===== BAGIAN PUTIH AGAR TERLIHAT BAWAHNYA ====
           ],
@@ -180,7 +214,12 @@ class DashboardScreen extends StatelessWidget {
   }
 
   // ===== COMPONENT CARD =====
-  Widget _buildFeatureCard(BuildContext context, String title, IconData icon, String routeName) {
+  Widget _buildFeatureCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    String routeName,
+  ) {
     return InkWell(
       onTap: () {
         Navigator.pushNamed(context, routeName);

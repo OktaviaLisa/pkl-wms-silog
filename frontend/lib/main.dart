@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
-import 'screen/dashboard.dart'; 
+import 'screen/dashboard.dart';
 import 'screen/login.dart';
-import 'screen/admin.dart';    
+import 'screen/admin.dart';
 import 'screen/register.dart';
 import 'screen/inventory.dart';
 import 'screen/inbound_stock.dart';
+import 'screen/outbound.dart';
+import 'screen/add_outbound.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,9 +21,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'WMS Mobile',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
 
       home: const LoginPage(),
       // 🔹 Rute untuk navigasi ke halaman login
@@ -30,8 +30,10 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterPage(),
         '/admin_dashboard': (context) => const AdminDashboard(),
         '/dashboard_user': (context) => const DashboardScreen(),
-        '/inventory' : (context) => const InventoryPage(),
-        '/inbound_stock' : (context) => const InboundPage(),
+        '/inventory': (context) => const InventoryPage(),
+        '/inbound_stock': (context) => const InboundPage(),
+        '/outbound_stock': (context) => OutboundPage(),
+        '/addOutbound': (context) => AddOutboundPage(),
       },
     );
   }

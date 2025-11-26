@@ -24,9 +24,9 @@ class _InboundPageState extends State<InboundPage> {
   void _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUserId = prefs.getInt('user_id');
-    
+
     print('🔍 Loading inbound data untuk user ID: $currentUserId');
-    
+
     if (currentUserId != null) {
       setState(() {
         futureInbound = api.getInbound(userId: currentUserId);
@@ -45,7 +45,7 @@ class _InboundPageState extends State<InboundPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Inventory",
+          "Inbound Stock",
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -65,15 +65,11 @@ class _InboundPageState extends State<InboundPage> {
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text("Error: ${snapshot.error}"),
-            );
+            return Center(child: Text("Error: ${snapshot.error}"));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text("Tidak ada data inbound"),
-            );
+            return const Center(child: Text("Tidak ada data inbound"));
           }
 
           final inboundList = snapshot.data!;
@@ -99,7 +95,10 @@ class _InboundPageState extends State<InboundPage> {
                       // NAMA PRODUK
                       Row(
                         children: [
-                          const Icon(Icons.inventory_2, color: Color(0xFF960B07)),
+                          const Icon(
+                            Icons.inventory_2,
+                            color: Color(0xFF960B07),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(

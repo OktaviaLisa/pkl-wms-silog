@@ -58,10 +58,7 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": username,
-          "password": password,
-        }),
+        body: jsonEncode({"username": username, "password": password}),
       );
 
       final data = jsonDecode(response.body);
@@ -110,6 +107,7 @@ class ApiService {
       rethrow;
     }
   }
+
   //---------------------------------------------------------
   // 5. GET INBOUND LIST → Ambil semua data inbound_stock
   //---------------------------------------------------------
@@ -199,9 +197,6 @@ class ApiService {
     }
   }
 
-  //---------------------------------------------------------
-  // 8. CREATE GUDANG → Tambah gudang baru
-  //---------------------------------------------------------
   Future<bool> createGudang({
     required String namaGudang,
     required String alamatGudang,
@@ -212,10 +207,7 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "nama_gudang": namaGudang,
-          "alamat": alamatGudang,
-        }),
+        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamatGudang}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -230,4 +222,64 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> getOutbound({int? userId}) async {
+    String urlString = "$baseUrl/api/outbound/getOutbound";
+    if (userId != null) {
+      urlString += "?user_id=$userId";
+    }
+    final url = Uri.parse(urlString);
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load outbound stock");
+      }
+    } catch (e) {
+      print("ERROR API GET OUTBOUND: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> createOutbound(Map<String, dynamic> data) async {
+    final url = Uri.parse("$baseUrl/api/outbound/postOutbound");
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data), // cukup satu body saja
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Gagal menyimpan outbound");
+      }
+    } catch (e) {
+      print("ERROR API CREATE OUTBOUND: $e");
+      rethrow; // biar error dilempar ke UI
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserGudang({required int userId}) async {
+    final url = Uri.parse("$baseUrl/api/gudang/user?user_id=$userId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"];
+      } else {
+        throw Exception("Failed to load user gudang");
+      }
+    } catch (e) {
+      print("ERROR API GET USER GUDANG: $e");
+      rethrow;
+    }
+  }
 }

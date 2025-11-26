@@ -250,6 +250,28 @@ func (h *WMSHandler) GetGudang(c *gin.Context) {
 	})
 }
 
+func (h *WMSHandler) GetUserGudang(c *gin.Context) {
+	userID := c.Query("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id diperlukan"})
+		return
+	}
+
+	var user models.Users
+	if err := h.db.Preload("Gudang").Where("idUser = ?", userID).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User gudang retrieved successfully",
+		"data": gin.H{
+			"nama_gudang": user.Gudang.NamaGudang,
+			"id_gudang":   user.RoleGudang,
+		},
+	})
+}
+
 func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
 	var p models.Produk
 
@@ -357,18 +379,181 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 func (h *WMSHandler) CreateGudang(c *gin.Context) {
 	var gudang models.Gudang
 
+	// Bind JSON ke struct Gudang
 	if err := c.ShouldBindJSON(&gudang); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid input: " + err.Error(),
+		})
+		return
+	}
+
+	// Save ke database
+	if err := h.db.Create(&gudang).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal membuat gudang: " + err.Error(),
+		})
+		return
+	}
+
+	// Response sukses
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Gudang berhasil dibuat",
+		"data":    gudang,
+	})
+}
+
+// OUTBOUND
+func (h *WMSHandler) GetOutbound(c *gin.Context) {
+	userID := c.Query("user_id")
+	fmt.Printf("🔍 GetOutbound dipanggil dengan user_id: %s\n", userID)
+
+	if userID == "" {
+		// Tampilkan semua data jika tidak ada user_id
+		var outbound []models.Outbound
+		result := h.db.
+			Preload("Produk").
+			Preload("GudangAsalObj").
+			Preload("GudangTujuanObj").
+			Order("idOutbound DESC").
+			Find(&outbound)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+			return
+		}
+
+		var response []map[string]interface{}
+		for _, item := range outbound {
+			response = append(response, map[string]interface{}{
+				"idOutbound":         item.IDOutbound,
+				"idProduk":           item.IDProduk,
+				"gudang_asal":        item.GudangAsal,
+				"gudang_tujuan":      item.GudangTujuan,
+				"tgl_keluar":         item.TglKeluar,
+				"deskripsi":          item.Deskripsi,
+				"nama_produk":        item.Produk.NamaProduk,
+				"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
+				"nama_gudang_tujuan": item.GudangTujuanObj.NamaGudang,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Outbound retrieved successfully",
+			"data":    response,
+		})
+		return
+	}
+
+	// Cek user ada atau tidak
+	var user models.Users
+	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
+		fmt.Printf("❌ User dengan ID %s tidak ditemukan: %v\n", userID, err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
+
+	// Filter berdasarkan gudang_asal = role_gudang user
+	var outbound []models.Outbound
+	result := h.db.
+		Preload("Produk").
+		Preload("GudangAsalObj").
+		Preload("GudangTujuanObj").
+		Where("gudang_asal = ?", user.RoleGudang).
+		Order("idOutbound DESC").
+		Find(&outbound)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	fmt.Printf("📦 Ditemukan %d data outbound untuk gudang %d\n", len(outbound), user.RoleGudang)
+
+	var response []map[string]interface{}
+	for _, item := range outbound {
+		response = append(response, map[string]interface{}{
+			"idOutbound":         item.IDOutbound,
+			"idProduk":           item.IDProduk,
+			"gudang_asal":        item.GudangAsal,
+			"gudang_tujuan":      item.GudangTujuan,
+			"tgl_keluar":         item.TglKeluar,
+			"deskripsi":          item.Deskripsi,
+			"nama_produk":        item.Produk.NamaProduk,
+			"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
+			"nama_gudang_tujuan": item.GudangTujuanObj.NamaGudang,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Outbound retrieved successfully",
+		"data":    response,
+	})
+}
+
+func (h *WMSHandler) CreateOutbound(c *gin.Context) {
+	// request expects idProduk as integer, gudang_asal/tujuan as string
+	var input struct {
+		IDProduk     int    `json:"idProduk"`
+		GudangAsal   string `json:"gudang_asal"`
+		GudangTujuan string `json:"gudang_tujuan"`
+		TglKeluar    string `json:"tgl_keluar"`
+		Deskripsi    string `json:"deskripsi"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		// return error detail to help debugging
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.db.Create(&gudang).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat gudang"})
+	// validate minimal
+	if input.IDProduk == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "idProduk harus diisi dan bukan 0"})
+		return
+	}
+	if input.GudangAsal == "" || input.GudangTujuan == "" || input.TglKeluar == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Field gudang_asal, gudang_tujuan, tgl_keluar wajib diisi"})
+		return
+	}
+
+	// Get or create gudang asal
+	idAsal, err := h.GetOrCreateGudang(input.GudangAsal)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat/ambil gudang asal"})
+		return
+	}
+
+	// Get or create gudang tujuan
+	idTujuan, err := h.GetOrCreateGudang(input.GudangTujuan)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat/ambil gudang tujuan"})
+		return
+	}
+
+	// Optional: validate tanggal format (YYYY-MM-DD) ΓÇö just store string if you prefer
+	// but safer to parse and store or validate:
+	if _, err := time.Parse("2006-01-02", input.TglKeluar); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format tgl_keluar tidak valid, gunakan YYYY-MM-DD"})
+		return
+	}
+
+	// Build outbound model (sesuaikan fields di models.Outbound)
+	outbound := models.Outbound{
+		IDProduk:     uint(input.IDProduk),
+		GudangAsal:   uint(idAsal),
+		GudangTujuan: uint(idTujuan),
+		TglKeluar:    input.TglKeluar,
+		Deskripsi:    input.Deskripsi,
+	}
+
+	if err := h.db.Create(&outbound).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat outbound: " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Gudang berhasil dibuat",
-		"data":    gudang,
+		"message": "Outbound created successfully",
+		"data":    outbound,
 	})
 }
