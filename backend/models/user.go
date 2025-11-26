@@ -8,7 +8,7 @@ type Users struct {
 	Username   string    `gorm:"column:username" json:"username"`
 	Password   string    `gorm:"column:password" json:"password"`
 	CreatedAt  time.Time `gorm:"column:created_at" json:"created_at"`
-	RoleGudang int       `gorm:"column:role_gudang" json:"role_gudang"` // ← Kolom baru
+	RoleGudang int       `gorm:"column:role_gudang" json:"role_gudang"` 
 
 	Gudang Gudang `gorm:"foreignKey:RoleGudang;references:IdGudang" json:"gudang_obj,omitempty"`
 }
