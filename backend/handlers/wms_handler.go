@@ -114,7 +114,7 @@ func (h *WMSHandler) CreateUser(c *gin.Context) {
 
 	// Simpan user
 	if err := h.db.Create(&user).Error; err != nil {
-		fmt.Println("DB error:", err) // <-- ini penting
+		fmt.Println("DB error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat user"})
 		return
 	}
@@ -423,12 +423,15 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 
 		var response []map[string]interface{}
 		for _, item := range outbound {
+			// Format tanggal ke DD-MM-YYYY
+			formattedDate := item.TglKeluar.Format("02-01-2006")
+
 			response = append(response, map[string]interface{}{
 				"idOutbound":         item.IDOutbound,
 				"idProduk":           item.IDProduk,
 				"gudang_asal":        item.GudangAsal,
 				"gudang_tujuan":      item.GudangTujuan,
-				"tgl_keluar":         item.TglKeluar,
+				"tgl_keluar":         formattedDate,
 				"deskripsi":          item.Deskripsi,
 				"nama_produk":        item.Produk.NamaProduk,
 				"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
@@ -472,12 +475,15 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 
 	var response []map[string]interface{}
 	for _, item := range outbound {
+		// Format tanggal ke DD-MM-YYYY (sama seperti inbound)
+		formattedDate := item.TglKeluar.Format("02-01-2006")
+
 		response = append(response, map[string]interface{}{
 			"idOutbound":         item.IDOutbound,
 			"idProduk":           item.IDProduk,
 			"gudang_asal":        item.GudangAsal,
 			"gudang_tujuan":      item.GudangTujuan,
-			"tgl_keluar":         item.TglKeluar,
+			"tgl_keluar":         formattedDate,
 			"deskripsi":          item.Deskripsi,
 			"nama_produk":        item.Produk.NamaProduk,
 			"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
@@ -531,19 +537,19 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 		return
 	}
 
-	// Optional: validate tanggal format (YYYY-MM-DD) ΓÇö just store string if you prefer
-	// but safer to parse and store or validate:
-	if _, err := time.Parse("2006-01-02", input.TglKeluar); err != nil {
+	// Parse tanggal ke time.Time
+	tanggal, err := time.Parse("2006-01-02", input.TglKeluar)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format tgl_keluar tidak valid, gunakan YYYY-MM-DD"})
 		return
 	}
 
-	// Build outbound model (sesuaikan fields di models.Outbound)
+	// Build outbound model
 	outbound := models.Outbound{
 		IDProduk:     uint(input.IDProduk),
 		GudangAsal:   uint(idAsal),
 		GudangTujuan: uint(idTujuan),
-		TglKeluar:    input.TglKeluar,
+		TglKeluar:    tanggal,
 		Deskripsi:    input.Deskripsi,
 	}
 
