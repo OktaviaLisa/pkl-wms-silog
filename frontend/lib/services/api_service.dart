@@ -198,6 +198,60 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  //---------------------------------------------------------
+  // 8. GET SATUAN → Ambil data satuan untuk dropdown
+  //---------------------------------------------------------
+  Future<List<dynamic>> getSatuan() async {
+    final url = Uri.parse("$baseUrl/api/satuan/list");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load satuan");
+      }
+    } catch (e) {
+      print("ERROR API GET SATUAN: $e");
+      rethrow;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 9. CREATE PRODUK → Buat produk baru
+  //---------------------------------------------------------
+  Future<bool> createProduk({
+    required String kodeProduk,
+    required String namaProduk,
+    required int volumeProduk,
+    required int idSatuan,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/produk/create");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "kode_produk": kodeProduk,
+          "nama_produk": namaProduk,
+          "volume": volumeProduk,
+          "id_satuan": idSatuan,
+        }),
+      );
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print("ERROR API CREATE PRODUK: $e");
+      rethrow;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 10. CREATE GUDANG → Buat gudang baru
+  //---------------------------------------------------------
   Future<bool> createGudang({
     required String namaGudang,
     required String alamatGudang,
@@ -208,15 +262,13 @@ Future<Map<String, dynamic>> createUser({
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamatGudang}),
+        body: jsonEncode({
+          "nama_gudang": namaGudang,
+          "alamat": alamatGudang,
+        }),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData["error"] ?? "Gagal membuat gudang");
-      }
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print("ERROR API CREATE GUDANG: $e");
       rethrow;
@@ -245,8 +297,9 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  Future<bool> createOutbound(Map<String, dynamic> data) async {
+    Future<bool> createOutbound(Map<String, dynamic> data) async {
     final url = Uri.parse("$baseUrl/api/outbound/postOutbound");
+
     try {
       final response = await http.post(
         url,
@@ -266,6 +319,9 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  //---------------------------------------------------------
+  // 9. CREATE PRODUK → Tambah produk baru
+  //-------------------------------------------------------
   Future<Map<String, dynamic>> getUserGudang({required int userId}) async {
     final url = Uri.parse("$baseUrl/api/gudang/user?user_id=$userId");
 
@@ -283,4 +339,8 @@ Future<Map<String, dynamic>> createUser({
       rethrow;
     }
   }
+
+
 }
+
+  

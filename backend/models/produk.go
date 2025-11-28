@@ -6,8 +6,10 @@ type Produk struct {
 	NamaProduk string `gorm:"column:nama_produk" json:"nama_produk"`
 	Volume     int    `gorm:"column:volume" json:"volume"`
 	IdSatuan   int    `gorm:"column:idSatuan" json:"id_satuan"`
+
+	Satuan Satuan `gorm:"foreignKey:IdSatuan;references:IDSatuan" json:"satuan"`
 }
 
 func (Produk) TableName() string {
-	return "Produk"
+	return "produk"
 }

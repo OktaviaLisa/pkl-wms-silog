@@ -182,8 +182,6 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
-
 	// Filter berdasarkan gudang_tujuan = role_gudang user
 	var inboundStocks []models.Inbound_Stock
 	result := h.db.
@@ -197,8 +195,6 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
-
-	fmt.Printf("📦 Ditemukan %d data inbound untuk gudang %d\n", len(inboundStocks), user.RoleGudang)
 
 	var response []map[string]interface{}
 	for _, item := range inboundStocks {
@@ -454,8 +450,6 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
-
 	// Filter berdasarkan gudang_asal = role_gudang user
 	var outbound []models.Outbound
 	result := h.db.
@@ -470,8 +464,6 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
-
-	fmt.Printf("📦 Ditemukan %d data outbound untuk gudang %d\n", len(outbound), user.RoleGudang)
 
 	var response []map[string]interface{}
 	for _, item := range outbound {
@@ -561,5 +553,71 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Outbound created successfully",
 		"data":    outbound,
+	})
+}
+
+func (h *WMSHandler) GetProdukByGudang(c *gin.Context) {
+	gudangID := c.Query("gudang_id")
+	if gudangID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
+		return
+	}
+
+	var produk []models.Produk
+
+	result := h.db.
+		Joins("JOIN inbound_stocks ON inbound_stocks.idProduk = produk.idProduk").
+		Where("inbound_stocks.gudang_tujuan = ?", gudangID).
+		Group("produk.idProduk").
+		Find(&produk)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Produk retrieved successfully",
+		"data":    produk,
+	})
+}
+
+func (h *WMSHandler) CreateProduk(c *gin.Context) {
+	var produk models.Produk
+
+	// Bind JSON ke struct Gudang
+	if err := c.ShouldBindJSON(&produk); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid input: " + err.Error(),
+		})
+		return
+	}
+
+	// Save ke database
+	if err := h.db.Create(&produk).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal membuat gudang: " + err.Error(),
+		})
+		return
+	}
+
+	// Response sukses
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Gudang berhasil dibuat",
+		"data":    produk,
+	})
+}
+
+func (h *WMSHandler) GetSatuan(c *gin.Context) {
+	var satuan []models.Satuan
+	result := h.db.Find(&satuan)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Satuan retrieved successfully",
+		"data":    satuan,
 	})
 }
