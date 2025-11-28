@@ -44,11 +44,17 @@ func SetupRoutes(h *Handler) *gin.Engine {
 		gudang := api.Group("/gudang")
 		{
 			gudang.GET("/list", h.WMS.GetGudang)
+			gudang.GET("/user", h.WMS.GetUserGudang)
 			gudang.POST("/create", h.WMS.CreateGudang)
+		}
+		outbound := api.Group("/outbound")
+		{
+			outbound.GET("/getOutbound", h.WMS.GetOutbound)
+			outbound.POST("/postOutbound", h.WMS.CreateOutbound)
 		}
 		satuan := api.Group("/satuan")
 		{
-			satuan.GET("list", h.WMS.GetSatuan)
+			satuan.GET("/list", h.WMS.GetSatuan)
 		}
 	}
 
