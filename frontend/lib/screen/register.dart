@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; 
-import 'login.dart';
+import '../services/api_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,238 +9,235 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  bool _isPasswordVisible = false;
-  bool _isConfirmVisible = false;
-  bool _isLoading = false;
-
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-
   final ApiService apiService = ApiService();
 
-  Future<void> registerUser() async {
-    final email = _emailController.text.trim();
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
-    final confirm = _confirmPasswordController.text.trim();
+  List users = [];
+  List gudangList = [];
+  int? selectedGudang;
 
-    if (email.isEmpty || username.isEmpty || password.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Semua kolom harus diisi")),
-      );
-      return;
-    }
+  bool isLoading = true;
+  bool obscurePassword = true;
 
-    if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password tidak cocok")),
-      );
-      return;
-    }
+  @override
+  void initState() {
+    super.initState();
+    fetchUsers();
+    fetchGudang();
+  }
 
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> fetchUsers() async {
     try {
-      final result = await apiService.createUser(
-        email: email,
-        username: username,
-        password: password,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result["message"] ?? "Registrasi berhasil")),
-      );
-
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal register: $e")),
-      );
-    } finally {
+      final data = await apiService.getAllUsers(); // <<========== FIX
       setState(() {
-        _isLoading = false;
+        users = data;
+        users.sort((a, b) =>
+        int.parse(a["idUser"].toString()).compareTo(int.parse(b["idUser"].toString())));
+        isLoading = false;
       });
+    } catch (e) {
+      setState(() => isLoading = false);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 150, 17, 7),
-      body: Center(
-        child: Container(
-          margin: const EdgeInsets.all(40),
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Kiri: gambar + teks motivasi
-              Expanded(
-                flex: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: const DecorationImage(
-                      image: AssetImage('lib/assets/images/warehouses.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.black.withOpacity(0.4),
-                    ),
-                  ),
-                ),
-              ),
+  Future<void> fetchGudang() async {
+    try {
+      final data = await apiService.getGudang();
+      setState(() => gudangList = data);
+    } catch (e) {
+      print("Error fetch gudang: $e");
+    }
+  }
 
-              const SizedBox(width: 40),
+  String formatDate(String rawDate) {
+    try {
+      final date = DateTime.parse(rawDate);
+      return "${date.day}-${date.month}-${date.year}";
+    } catch (e) {
+      return rawDate;
+    }
+  }
 
-              // Kanan: Form register
-              Expanded(
-                flex: 1,
+  String getGudangName(int? id) {
+    if (id == null) return "-";
+    final g = gudangList.firstWhere(
+      (item) => item["id_gudang"] == id,
+      orElse: () => null,
+    );
+    return g?["nama_gudang"] ?? "-";
+  }
+
+  void showCreateUserDialog() {
+    final emailController = TextEditingController();
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool obscurePassword = true;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Container(
+                width: 420,
+                padding: const EdgeInsets.all(24),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Daftar',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 150, 17, 7),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const Text("Buat User Baru",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7B1E1E))
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
-                    // Email
                     TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Username
-                    TextField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username*',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Password
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible,
+                      controller: emailController,
                       decoration: InputDecoration(
-                        labelText: 'Password*',
-                        border: const OutlineInputBorder(),
+                        labelText: "Email",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: usernameController,
+                      decoration: InputDecoration(
+                        labelText: "Username",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: "Password",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
+                          icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
+                          onPressed: () => setStateDialog(() {
+                            obscurePassword = !obscurePassword;
+                          }),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                    // Konfirmasi Password
-                    TextField(
-                      controller: _confirmPasswordController,
-                      obscureText: !_isConfirmVisible,
+                    DropdownButtonFormField<int>(
                       decoration: InputDecoration(
-                        labelText: 'Konfirmasi Password*',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isConfirmVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isConfirmVisible = !_isConfirmVisible;
-                            });
-                          },
-                        ),
+                        labelText: "Pilih Gudang",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
+                      value: selectedGudang,
+                      items: gudangList.map<DropdownMenuItem<int>>((g) {
+                        return DropdownMenuItem(
+                          value: g["id_gudang"],
+                          child: Text(g["nama_gudang"]),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedGudang = value!;
+                        });
+                      },
                     ),
                     const SizedBox(height: 24),
 
-                    // Tombol daftar
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : registerUser,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 150, 17, 7),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                'Daftar',
-                                style: TextStyle(fontSize: 18, color: Colors.white),
-                              ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Sudah punya akun?
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text('Sudah punya akun? '),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
-                          );
-                          },
-                          child: const Text(
-                            'Masuk',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 150, 17, 7),
-                              fontWeight: FontWeight.bold,
-                            ),
+                        TextButton(
+                          child: const Text("Batal"),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7B1E1E),
+                            foregroundColor: Colors.white,
                           ),
+                          child: const Text("Simpan"),
+                          onPressed: () async {
+                            if (selectedGudang == null) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(content: Text("Pilih gudang dahulu")));
+                              return;
+                            }
+
+                            await apiService.createUser(
+                              email: emailController.text.trim(),
+                              username: usernameController.text.trim(),
+                              password: passwordController.text.trim(),
+                              roleGudang: selectedGudang!,
+                            );
+
+                            Navigator.pop(context);
+                            fetchUsers();
+                          },
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF7B1E1E),
+        title: const Text("User Management", style: TextStyle(color: Colors.white)),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 40, left: 24, right: 24), // ✅ jarak dari atas
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : users.isEmpty
+                ? const Center(child: Text("Tidak ada user terdaftar"))
+                : SingleChildScrollView(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal, // ✅ scroll kanan–kiri
+                      child: DataTable(
+                        border: TableBorder.all(color: Colors.grey, width: 1),
+                        headingRowColor: MaterialStateColor.resolveWith(
+                          (states) => const Color(0xFF7B1E1E),
+                        ),
+                        headingTextStyle: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        columns: const [
+                          DataColumn(label: Text("No")),
+                          DataColumn(label: Text("Email")),
+                          DataColumn(label: Text("Username")),
+                          DataColumn(label: Text("Role Gudang")),
+                          DataColumn(label: Text("Dibuat")),
+                        ],
+                        rows: List.generate(users.length, (index) {
+                          final user = users[index];
+                          return DataRow(cells: [
+                            DataCell(Center(child: Text("${index + 1}"))),
+                            DataCell(Text(user["email"] ?? "-")),
+                            DataCell(Text(user["username"] ?? "-")),
+                            DataCell(Center(child: Text(getGudangName(user["role_gudang"])))),
+                            DataCell(Center(child: Text(formatDate(user["created_at"])))),
+                          ]);
+                        }),
+                      ),
+                    ),
+                  ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF7B1E1E),
+        onPressed: showCreateUserDialog,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

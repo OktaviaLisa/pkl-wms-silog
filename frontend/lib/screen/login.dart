@@ -153,25 +153,6 @@ class _LoginPageState extends State<LoginPage> {
                                 child: const Text("Login"),
                               ),
                             ),
-
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("Belum punya akun? "),
-                          InkWell(
-                            onTap: () =>
-                                Navigator.pushNamed(context, '/register'),
-                            child: const Text(
-                              "Daftar Sekarang",
-                              style: TextStyle(
-                                color: Color(0xFF7B1E1E),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
                     ],
                   ),
                 ),

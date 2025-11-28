@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'register.dart';
+import 'login.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -16,36 +18,13 @@ class AdminDashboard extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'Dashboard',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'Users',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              'Inventory',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
       ),
 
       body: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Row(
           children: [
-            // Sidebar
+            // Sidebar ---------------------------------------------------------
             Container(
               width: 220,
               decoration: BoxDecoration(
@@ -56,18 +35,51 @@ class AdminDashboard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-                  _sidebarItem(Icons.dashboard, 'Dashboard'),
-                  _sidebarItem(Icons.inventory, 'Inventory'),
-                  _sidebarItem(Icons.group, 'User Management'),
-                  _sidebarItem(Icons.local_shipping, 'Inbound'),
-                  _sidebarItem(Icons.logout, 'Outbound'),
+
+                  _sidebarItem(Icons.dashboard, 'Dashboard', onTap: () {}),
+
+                  _sidebarItem(Icons.inventory, 'Inventory', onTap: () {}),
+
+                  // 🟢 USER MANAGEMENT → REGISTER PAGE
+                  _sidebarItem(
+                    Icons.group,
+                    'User Management',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _sidebarItem(Icons.local_shipping, 'Inbound', onTap: () {}),
+                  _sidebarItem(Icons.logout, 'Outbound', onTap: () {}),
+
+                  const Spacer(),
+
+                  // 🟢 LOGOUT
+                  _sidebarItem(
+                    Icons.exit_to_app,
+                    'Logout',
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (c) => const LoginPage()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
 
             const SizedBox(width: 32),
 
-            // Content Area
+            // Content ----------------------------------------------------------
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,24 +116,27 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  // Sidebar item
-  Widget _sidebarItem(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(width: 16),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
+  // Sidebar Item Widget
+  Widget _sidebarItem(IconData icon, String label, {required Function() onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Card info widget
+  // Card Info
   Widget _infoCard(String title, String value) {
     return Expanded(
       child: Container(
