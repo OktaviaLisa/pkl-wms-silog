@@ -22,6 +22,7 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.GET("/api/outbound/getOutbound", h.WMS.GetOutbound)
 	r.POST("/api/outbound/postOutbound", h.WMS.CreateOutbound)
 	r.GET("/api/satuan/list", h.WMS.GetSatuan)
+	r.GET("/api/inventory/list", h.WMS.GetInventory)
 
 	// tambah routes kamu lainnya di sini
 }

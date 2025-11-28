@@ -621,3 +621,40 @@ func (h *WMSHandler) GetSatuan(c *gin.Context) {
 		"data":    satuan,
 	})
 }
+
+func (h *WMSHandler) GetInventory(c *gin.Context) {
+	gudangID := c.Query("gudang_id")
+	if gudangID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
+		return
+	}
+
+	var inventory []models.Inventory
+	result := h.db.
+		Preload("Produk.Satuan").
+		Preload("Gudang").
+		Where("idGudang = ?", gudangID).
+		Find(&inventory)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	// Format response untuk frontend
+	var response []map[string]interface{}
+	for _, item := range inventory {
+		response = append(response, map[string]interface{}{
+			"id_inventory": item.IdInventory,
+			"nama_produk":  item.Produk.NamaProduk,
+			"kode_produk":  item.Produk.KodeProduk,
+			"volume":       item.Produk.Volume,
+			"jenis_satuan": item.Produk.Satuan.JenisSatuan,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Inventory retrieved successfully",
+		"data":    response,
+	})
+}
