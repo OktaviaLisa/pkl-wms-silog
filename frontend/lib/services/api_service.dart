@@ -340,6 +340,42 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  Future<List<dynamic>> getInventory({required int gudangId}) async {
+    final url = Uri.parse("$baseUrl/api/inventory/list?gudang_id=$gudangId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load inventory");
+      }
+    } catch (e) {
+      print("ERROR API GET INVENTORY: $e");
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>> getAvailableProduk({required int gudangId}) async {
+    final url = Uri.parse("$baseUrl/api/produk/available?gudang_id=$gudangId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load available produk");
+      }
+    } catch (e) {
+      print("ERROR API GET AVAILABLE PRODUK: $e");
+      rethrow;
+    }
+  }
+
 
 }
 
