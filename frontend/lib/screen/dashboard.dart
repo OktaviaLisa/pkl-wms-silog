@@ -25,15 +25,158 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  // =============== LOGOUT FUNCTION ===============
+  Future<void> logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ===== NAVBAR (Sudah diperbaiki) =====
-            Container(
+
+      // =============== NAVBAR FIXED ===============
+      body: Stack(
+        children: [
+          // --- MAIN CONTENT ---
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 90), // supaya tidak ketutup navbar
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+
+                // ===== HERO SECTION =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+                  child: Row(
+                    children: [
+                      // Teks
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Warehouses Management\nSystem',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 150, 17, 7),
+                              ),
+                            ),
+                            SizedBox(height: 15),
+                            Text(
+                              'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
+                              'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 40),
+
+                      // Gambar warehouse
+                      Expanded(
+                        flex: 1,
+                        child: Image.asset(
+                          'lib/assets/images/warehouses.jpg',
+                          width: 400,
+                          height: 300,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
+                // ===== FEATURE CARDS SECTION =====
+                Container(
+                  width: double.infinity,
+                  color: const Color(0xFF960B07),
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Warehouses Management System',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // === SINGLE ROW SCROLLABLE ===
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildFeatureCard(
+                              context,
+                              "Inventory",
+                              Icons.inventory,
+                              '/inventory',
+                            ),
+                            const SizedBox(width: 20),
+
+                            _buildFeatureCard(
+                              context,
+                              "Quality Control",
+                              Icons.verified,
+                              '/quality_control',
+                            ),
+                            const SizedBox(width: 20),
+
+                            _buildFeatureCard(
+                              context,
+                              "Inbound Stock",
+                              Icons.arrow_downward,
+                              '/inbound_stock',
+                            ),
+                            const SizedBox(width: 20),
+
+                            _buildFeatureCard(
+                              context,
+                              "Outbound Stock",
+                              Icons.arrow_upward,
+                              '/outbound_stock',
+                            ),
+                            const SizedBox(width: 20),
+
+                            _buildFeatureCard(
+                              context,
+                              "Retur",
+                              Icons.assignment_return,
+                              '/retur',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // =============== NAVBAR (POSITIONED FIXED) ===============
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -47,8 +190,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Hai, username
                   Text(
                     'Hai, $username',
                     style: const TextStyle(
@@ -57,132 +201,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 30),
-
-            // ===== HERO SECTION =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
-              child: Row(
-                children: [
-                  // Teks
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Warehouses Management\nSystem',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 150, 17, 7),
-                          ),
-                        ),
-                        SizedBox(height: 15),
-                        Text(
-                          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
-                          'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
+                  // ========== LOGOUT BUTTON ==========
+                  IconButton(
+                    onPressed: logout,
+                    icon: const Icon(
+                      Icons.logout,
+                      color: Color.fromARGB(255, 150, 17, 7),
                     ),
-                  ),
-
-                  const SizedBox(width: 40),
-
-                  // Gambar warehouse
-                  Expanded(
-                    flex: 1,
-                    child: Image.asset(
-                      'lib/assets/images/warehouses.jpg',
-                      width: 400,
-                      height: 300,
-                      fit: BoxFit.contain,
-                    ),
+                    tooltip: "Logout",
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 50),
-
-            // ===== FEATURE CARDS SECTION =====
-            Container(
-              width: double.infinity,
-              color: const Color(0xFF960B07),
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-              child: Column(
-                children: [
-                  const Text(
-                    'Warehouses Management System',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // === SINGLE ROW SCROLLABLE ===
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFeatureCard(
-                          context,
-                          "Inventory",
-                          Icons.inventory,
-                          '/inventory',
-                        ),
-                        const SizedBox(width: 20),
-
-                        _buildFeatureCard(
-                          context,
-                          "Quality Control",
-                          Icons.verified,
-                          '/quality_control',
-                        ),
-                        const SizedBox(width: 20),
-
-                        _buildFeatureCard(
-                          context,
-                          "Inbound Stock",
-                          Icons.arrow_downward,
-                          '/inbound_stock',
-                        ),
-                        const SizedBox(width: 20),
-
-                        _buildFeatureCard(
-                          context,
-                          "Outbound Stock",
-                          Icons.arrow_upward,
-                          '/outbound_stock',
-                        ),
-                        const SizedBox(width: 20),
-
-                        _buildFeatureCard(
-                          context,
-                          "Retur",
-                          Icons.assignment_return,
-                          '/retur',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
