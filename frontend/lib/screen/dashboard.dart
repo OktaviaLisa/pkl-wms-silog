@@ -1,7 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String username = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  // Ambil username dari SharedPreferences
+  Future<void> loadUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString("username") ?? "User";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +32,7 @@ class DashboardScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ===== NAVBAR =====
+            // ===== NAVBAR (Sudah diperbaiki) =====
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               decoration: BoxDecoration(
@@ -25,61 +47,15 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Lorem',
-                    style: TextStyle(
+                  Text(
+                    'Hai, $username',
+                    style: const TextStyle(
                       color: Color.fromARGB(255, 150, 17, 7),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  Row(
-                    children: [
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/register');
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color.fromARGB(
-                            255,
-                            150,
-                            17,
-                            7,
-                          ),
-                          side: const BorderSide(
-                            color: Color.fromARGB(255, 150, 17, 7),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text('Register'),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            150,
-                            17,
-                            7,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                        ),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -205,8 +181,6 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ===== BAGIAN PUTIH AGAR TERLIHAT BAWAHNYA ====
           ],
         ),
       ),
