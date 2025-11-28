@@ -1,9 +1,39 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import 'register.dart';
 import 'login.dart';
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
+
+  @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
+  final ApiService apiService = ApiService();
+
+  int totalUsers = 0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTotalUsers();
+  }
+
+  Future<void> fetchTotalUsers() async {
+    try {
+      final users = await apiService.getAllUsers();
+      setState(() {
+        totalUsers = users.length;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      print("Error fetch users: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +70,6 @@ class AdminDashboard extends StatelessWidget {
 
                   _sidebarItem(Icons.inventory, 'Inventory', onTap: () {}),
 
-                  // 🟢 USER MANAGEMENT → REGISTER PAGE
                   _sidebarItem(
                     Icons.group,
                     'User Management',
@@ -50,7 +79,9 @@ class AdminDashboard extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => const RegisterPage(),
                         ),
-                      );
+                      ).then((_) {
+                        fetchTotalUsers(); // refresh total user setelah kembali dari register
+                      });
                     },
                   ),
 
@@ -59,7 +90,6 @@ class AdminDashboard extends StatelessWidget {
 
                   const Spacer(),
 
-                  // 🟢 LOGOUT
                   _sidebarItem(
                     Icons.exit_to_app,
                     'Logout',
@@ -101,7 +131,9 @@ class AdminDashboard extends StatelessWidget {
 
                   Row(
                     children: [
-                      _infoCard("Total Users", "24"),
+                      _infoCard("Total Users",
+                          isLoading ? "..." : totalUsers.toString()),
+
                       _infoCard("Total Items", "1,204"),
                       _infoCard("Inbound Today", "18"),
                       _infoCard("Outbound Today", "12"),
