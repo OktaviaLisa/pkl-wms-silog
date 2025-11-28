@@ -14,6 +14,8 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
   final TextEditingController gudangTujuanController = TextEditingController();
   final TextEditingController tglKeluar = TextEditingController();
   final TextEditingController deskripsi = TextEditingController();
+  final TextEditingController namaProdukController = TextEditingController();
+  final TextEditingController volumeSatuanController = TextEditingController();
 
   List produkList = [];
   List gudangList = [];
@@ -58,6 +60,8 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
     gudangTujuanController.dispose();
     tglKeluar.dispose();
     deskripsi.dispose();
+    namaProdukController.dispose();
+    volumeSatuanController.dispose();
     super.dispose();
   }
 
@@ -136,16 +140,50 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
   bool _produkHasId(int? id) {
     if (id == null) return false;
     return produkList.any((p) {
-      // beberapa API mungkin return key "idProduk" atau "id_produk"
       if (p is Map) {
-        if (p.containsKey('idProduk')) {
-          return p['idProduk'] == id;
-        } else if (p.containsKey('id_produk')) {
+        if (p.containsKey('id_produk')) {
           return p['id_produk'] == id;
         }
       }
       return false;
     });
+  }
+
+  void _updateProdukInfo(int? produkId) {
+    if (produkId == null) {
+      namaProdukController.clear();
+      volumeSatuanController.clear();
+      return;
+    }
+
+    final produk = produkList.firstWhere(
+      (p) => p['id_produk'] == produkId,
+      orElse: () => null,
+    );
+
+    if (produk != null) {
+      namaProdukController.text = produk['nama_produk'] ?? '';
+      // Gabungkan volume dan satuan dalam satu field
+      int volume = produk['volume'] ?? 1;
+      String satuan = _getSatuanName(produk['id_satuan']);
+      volumeSatuanController.text = '$volume $satuan';
+    }
+  }
+
+  String _getSatuanName(int? idSatuan) {
+    // Mapping sederhana untuk satuan berdasarkan id
+    switch (idSatuan) {
+      case 1:
+        return 'Pcs';
+      case 2:
+        return 'Kg';
+      case 3:
+        return 'Liter';
+      case 4:
+        return 'Box';
+      default:
+        return 'Unit';
+    }
   }
 
   @override
@@ -168,9 +206,9 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
               padding: const EdgeInsets.all(20),
               child: ListView(
                 children: [
-                  // Input Produk
+                  // Input Kode Produk
                   const Text(
-                    'Produk *',
+                    'Kode Produk *',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
@@ -179,24 +217,60 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
                     value: _produkHasId(selectedProduk) ? selectedProduk : null,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: 'Pilih produk',
+                      hintText: 'Pilih kode produk',
                     ),
                     items: produkList.map<DropdownMenuItem<int>>((item) {
-                      final id = item['idProduk'] ?? item['id_produk'];
-                      final name =
-                          item['nama_produk'] ??
-                          item['namaProduk'] ??
-                          item['nama'];
+                      final id = item['id_produk'];
+                      final kode = item['kode_produk'];
                       return DropdownMenuItem<int>(
                         value: id is int ? id : int.tryParse(id.toString()),
-                        child: Text(name.toString()),
+                        child: Text(kode.toString()),
                       );
                     }).toList(),
                     onChanged: (value) {
                       setState(() {
                         selectedProduk = value;
+                        _updateProdukInfo(value);
                       });
                     },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Input Nama Produk (Auto-fill)
+                  const Text(
+                    'Nama Produk',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: namaProdukController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText: 'Nama produk otomatis terisi',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      suffixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Input Volume + Satuan (Auto-fill)
+                  const Text(
+                    'Volume & Satuan',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: volumeSatuanController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText: 'Volume dan satuan otomatis terisi',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      suffixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
