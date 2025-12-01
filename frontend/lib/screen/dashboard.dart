@@ -179,7 +179,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF960B07),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.2),
@@ -196,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     'Hai, $username',
                     style: const TextStyle(
-                      color: Color.fromARGB(255, 150, 17, 7),
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -207,7 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: logout,
                     icon: const Icon(
                       Icons.logout,
-                      color: Color.fromARGB(255, 150, 17, 7),
+                      color: Colors.white,
                     ),
                     tooltip: "Logout",
                   ),

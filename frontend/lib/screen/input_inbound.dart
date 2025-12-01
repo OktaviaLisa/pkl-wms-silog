@@ -22,6 +22,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   DateTime? tanggalMasuk;
   bool isLoading = false;
   List<dynamic> gudangAsalList = [];
+  List<dynamic> inventoryGudangUser = [];
   String? selectedGudangAsal;
   String? selectedAlamatGudangAsal;
   int? userRoleGudang;
@@ -57,15 +58,38 @@ class _InputInboundPageState extends State<InputInboundPage> {
   }
 
   Future<void> _loadProduk() async {
-    try {
-      final data = await api.getProduk(); // Pastikan API ada
+  try {
+    final allProducts = await api.getProduk();
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? roleGudang = prefs.getInt("role_gudang");
+
+    if (roleGudang != null) {
+      // Ambil inventory
+      final inventory = await api.getInventory(gudangId: roleGudang);
+
+      // Ambil KODE PRODUK yang sudah ada di inventory
+      final existingProductCodes =
+          inventory.map((inv) => inv['kode_produk']).toSet();
+
+      print("Produk di inventory: $existingProductCodes");
+
+      // Filter produk yang BELUM ADA di inventory
       setState(() {
-        produkList = data;
+        produkList = allProducts
+            .where((p) => !existingProductCodes.contains(p['kode_produk']))
+            .toList();
       });
-    } catch (e) {
-      print("Gagal load satuan: $e");
+    } else {
+      setState(() {
+        produkList = allProducts;
+      });
     }
+  } catch (e) {
+    print("Gagal load produk: $e");
   }
+}
+
 
   Future<void> _submitInbound() async {
     if (kodeProdukController.text.isEmpty ||
