@@ -41,14 +41,11 @@ class ApiService {
     }
   }
 
-  // Tambahan khusus untuk register.dart supaya error getUsers hilang
   Future<List<dynamic>> getUsers() async {
-    return await getAllUsers(); // alias tanpa merubah struktur
+    return await getAllUsers();
   }
 
-  //---------------------------------------------------------
-  // 3. LOGIN → Validasi username dan password
-  //---------------------------------------------------------
+  // 3. LOGIN
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -75,43 +72,41 @@ class ApiService {
     }
   }
 
-  // 4. CREATE USER → Register user baru
-Future<Map<String, dynamic>> createUser({
-  required String email,
-  required String username,
-  required String password,
-  required int roleGudang,   // <<< WAJIB INTEGER
-}) async {
-  final url = Uri.parse("$baseUrl/api/user/user");
+  // 4. CREATE USER
+  Future<Map<String, dynamic>> createUser({
+    required String email,
+    required String username,
+    required String password,
+    required int roleGudang,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/user/user");
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "username": username,
-        "password": password,
-        "role_gudang": roleGudang,  
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "username": username,
+          "password": password,
+          "role_gudang": roleGudang,
+        }),
+      );
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return data;
-    } else {
-      throw Exception(data["error"] ?? "Gagal membuat user");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return data;
+      } else {
+        throw Exception(data["error"] ?? "Gagal membuat user");
+      }
+    } catch (e) {
+      print("ERROR API CREATE USER: $e");
+      rethrow;
     }
-  } catch (e) {
-    print("ERROR API CREATE USER: $e");
-    rethrow;
   }
-}
 
-  //---------------------------------------------------------
-  // 5. GET INBOUND LIST → Ambil semua data inbound_stock
-  //---------------------------------------------------------
+  // 5. GET INBOUND LIST
   Future<List<dynamic>> getInbound({int? userId}) async {
     String urlString = "$baseUrl/api/inbound/list";
     if (userId != null) {
@@ -151,14 +146,12 @@ Future<Map<String, dynamic>> createUser({
         throw Exception(errorData["error"] ?? "Gagal menyimpan inbound");
       }
     } catch (e) {
-      print("ERROR API CREATE INBOUND WITH NAMES: $e");
+      print("ERROR API CREATE INBOUND: $e");
       rethrow;
     }
   }
 
-  //---------------------------------------------------------
-  // 6. GET PRODUK → Ambil data produk untuk dropdown
-  //---------------------------------------------------------
+  // 6. GET PRODUK
   Future<List<dynamic>> getProduk() async {
     final url = Uri.parse("$baseUrl/api/produk/list");
 
@@ -177,9 +170,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  //---------------------------------------------------------
-  // 7. GET GUDANG → Ambil data gudang untuk dropdown
-  //---------------------------------------------------------
+  // 7. GET GUDANG
   Future<List<dynamic>> getGudang() async {
     final url = Uri.parse("$baseUrl/api/gudang/list");
 
@@ -198,9 +189,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  //---------------------------------------------------------
-  // 8. GET SATUAN → Ambil data satuan untuk dropdown
-  //---------------------------------------------------------
+  // 8. GET SATUAN
   Future<List<dynamic>> getSatuan() async {
     final url = Uri.parse("$baseUrl/api/satuan/list");
 
@@ -219,9 +208,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  //---------------------------------------------------------
-  // 9. CREATE PRODUK → Buat produk baru
-  //---------------------------------------------------------
+  // 9. CREATE PRODUK
   Future<bool> createProduk({
     required String kodeProduk,
     required String namaProduk,
@@ -249,9 +236,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  //---------------------------------------------------------
-  // 10. CREATE GUDANG → Buat gudang baru
-  //---------------------------------------------------------
+  // 10. CREATE GUDANG
   Future<bool> createGudang({
     required String namaGudang,
     required String alamatGudang,
@@ -275,6 +260,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  // 11. OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
     String urlString = "$baseUrl/api/outbound/getOutbound";
     if (userId != null) {
@@ -297,7 +283,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-    Future<bool> createOutbound(Map<String, dynamic> data) async {
+  Future<bool> createOutbound(Map<String, dynamic> data) async {
     final url = Uri.parse("$baseUrl/api/outbound/postOutbound");
 
     try {
@@ -319,9 +305,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
-  //---------------------------------------------------------
-  // 9. CREATE PRODUK → Tambah produk baru
-  //-------------------------------------------------------
+  // 12. GET USER GUDANG
   Future<Map<String, dynamic>> getUserGudang({required int userId}) async {
     final url = Uri.parse("$baseUrl/api/gudang/user?user_id=$userId");
 
@@ -340,6 +324,7 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  // GET INVENTORY BY GUDANG ID
   Future<List<dynamic>> getInventory({required int gudangId}) async {
     final url = Uri.parse("$baseUrl/api/inventory/list?gudang_id=$gudangId");
 
@@ -358,8 +343,10 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  // GET PRODUK YANG TERSEDIA DI GUDANG
   Future<List<dynamic>> getAvailableProduk({required int gudangId}) async {
-    final url = Uri.parse("$baseUrl/api/produk/available?gudang_id=$gudangId");
+    final url =
+        Uri.parse("$baseUrl/api/produk/available?gudang_id=$gudangId");
 
     try {
       final response = await http.get(url);
@@ -376,7 +363,23 @@ Future<Map<String, dynamic>> createUser({
     }
   }
 
+  // 13. GET INVENTORY BY WAREHOUSE — FIXED
+  Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
+    final url = Uri.parse(
+        "$baseUrl/api/inventory/by-warehouse?id_gudang=$idGudang");
 
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load inventory for warehouse $idGudang");
+      }
+    } catch (e) {
+      print("ERROR API GET INVENTORY BY WAREHOUSE: $e");
+      rethrow;
+    }
+  }
 }
-
-  
