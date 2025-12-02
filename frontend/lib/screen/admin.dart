@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import '../services/api_service.dart';
 import 'register.dart';
 import 'login.dart';
+import 'admin_inventory.dart'; 
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -68,7 +69,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   _sidebarItem(Icons.dashboard, 'Dashboard', onTap: () {}),
 
-                  _sidebarItem(Icons.inventory, 'Inventory', onTap: () {}),
+                  // → Updated to open AdminInventoryPage
+                  _sidebarItem(
+                    Icons.inventory,
+                    'Inventory',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminInventoryPage(),
+                        ),
+                      );
+                    },
+                  ),
 
                   _sidebarItem(
                     Icons.group,
@@ -80,7 +93,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           builder: (context) => const RegisterPage(),
                         ),
                       ).then((_) {
-                        fetchTotalUsers(); // refresh total user setelah kembali dari register
+                        fetchTotalUsers(); 
                       });
                     },
                   ),
@@ -134,7 +147,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       _infoCard("Total Users",
                           isLoading ? "..." : totalUsers.toString()),
 
-                      _infoCard("Total Items", "1,204"),
+                      // → Updated text only
+                      _infoCard("Total Inventory", "1,204"),
                       _infoCard("Inbound Today", "18"),
                       _infoCard("Outbound Today", "12"),
                     ],
