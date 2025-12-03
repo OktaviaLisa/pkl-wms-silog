@@ -2,15 +2,15 @@ package models
 
 import "time"
 
-type Inbound_Stock struct {
-	IdInbound int `gorm:"column:idInbound;primaryKey" json:"idInbound"`
-	IdProduk  int `gorm:"column:idProduk" json:"idProduk"`
+type Orders struct {
+	IdOrders int `gorm:"column:idOrders;primaryKey" json:"idOrders"`
+	IdProduk int `gorm:"column:idProduk" json:"idProduk"`
 
 	// JSON TAG DIPISAH dari relasi
 	GudangAsalId   int `gorm:"column:gudang_asal" json:"gudang_asal"`
 	GudangTujuanId int `gorm:"column:gudang_tujuan" json:"gudang_tujuan"`
 
-	TanggalMasuk time.Time `gorm:"column:tgl_masuk" json:"tanggal_masuk"`
+	TanggalMasuk time.Time `gorm:"column:tgl" json:"tanggal"`
 	Deskripsi    string    `gorm:"column:deskripsi" json:"deskripsi"`
 
 	// RELASI – JSON TAG dengan nama berbeda untuk output
@@ -19,6 +19,6 @@ type Inbound_Stock struct {
 	Produk       Produk `gorm:"foreignKey:IdProduk;references:IdProduk" json:"produk_obj,omitempty"`
 }
 
-func (Inbound_Stock) TableName() string {
-	return "inbound_stock"
+func (Orders) TableName() string {
+	return "Orders"
 }

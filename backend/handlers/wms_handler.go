@@ -134,7 +134,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 
 	if userID == "" {
 		// Tampilkan semua data jika tidak ada user_id
-		var inboundStocks []models.Inbound_Stock
+		var inboundStocks []models.Orders
 		result := h.db.
 			Preload("Produk").
 			Preload("GudangAsal").
@@ -149,7 +149,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		var response []map[string]interface{}
 		for _, item := range inboundStocks {
 			response = append(response, map[string]interface{}{
-				"idInbound":          item.IdInbound,
+				"idOrders":           item.IdOrders,
 				"idProduk":           item.IdProduk,
 				"gudang_asal":        item.GudangAsalId,
 				"gudang_tujuan":      item.GudangTujuanId,
@@ -183,7 +183,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	}
 
 	// Filter berdasarkan gudang_tujuan = role_gudang user
-	var inboundStocks []models.Inbound_Stock
+	var inboundStocks []models.Orders
 	result := h.db.
 		Preload("Produk").
 		Preload("GudangAsal").
@@ -199,7 +199,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	var response []map[string]interface{}
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
-			"idInbound":          item.IdInbound,
+			"idOrders":           item.IdOrders,
 			"idProduk":           item.IdProduk,
 			"gudang_asal":        item.GudangAsalId,
 			"gudang_tujuan":      item.GudangTujuanId,
@@ -353,7 +353,7 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 	}
 
 	// 5. Buat inbound stock
-	inbound := models.Inbound_Stock{
+	inbound := models.Orders{
 		IdProduk:       idProduk,
 		GudangAsalId:   idGudangAsal,
 		GudangTujuanId: idGudangTujuan,
@@ -566,8 +566,8 @@ func (h *WMSHandler) GetProdukByGudang(c *gin.Context) {
 	var produk []models.Produk
 
 	result := h.db.
-		Joins("JOIN inbound_stocks ON inbound_stocks.idProduk = produk.idProduk").
-		Where("inbound_stocks.gudang_tujuan = ?", gudangID).
+		Joins("JOIN Orders ON Orders.idProduk = produk.idProduk").
+		Where("Orders.gudang_tujuan = ?", gudangID).
 		Group("produk.idProduk").
 		Find(&produk)
 
