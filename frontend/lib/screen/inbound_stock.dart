@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'input_inbound.dart';
+import 'detail_inbound.dart';
 
 class InboundPage extends StatefulWidget {
   const InboundPage({super.key});
@@ -80,7 +81,16 @@ class _InboundPageState extends State<InboundPage> {
             itemBuilder: (context, index) {
               final item = inboundList[index];
 
-              return Card(
+              return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DetailInboundPage(data: item),
+                  ),
+                );
+              },
+              child: Card(
                 elevation: 3,
                 shadowColor: Colors.black26,
                 shape: RoundedRectangleBorder(
@@ -92,7 +102,6 @@ class _InboundPageState extends State<InboundPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // NAMA PRODUK
                       Row(
                         children: [
                           const Icon(
@@ -102,6 +111,7 @@ class _InboundPageState extends State<InboundPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
+                              "Kode Produk: ${item["kode_produk"]}\n"
                               "Nama Produk: ${item["nama_produk"]}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -114,7 +124,6 @@ class _InboundPageState extends State<InboundPage> {
 
                       const SizedBox(height: 10),
 
-                      // DETAIL
                       Text("Gudang Asal: ${item["nama_gudang_asal"]}"),
                       Text("Gudang Tujuan: ${item["nama_gudang_tujuan"]}"),
                       Text("Tanggal Masuk: ${item["tanggal_masuk"]}"),
@@ -122,7 +131,9 @@ class _InboundPageState extends State<InboundPage> {
                     ],
                   ),
                 ),
-              );
+              ),
+            );
+
             },
           );
         },

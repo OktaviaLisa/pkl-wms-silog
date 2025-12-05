@@ -109,49 +109,52 @@ class _InputInboundPageState extends State<InputInboundPage> {
     setState(() => isLoading = true);
 
     try {
-      // Simpan produk baru ke tabel produk
-      await api.createProduk(
-        kodeProduk: kodeProdukController.text.trim(),
-        namaProduk: namaProdukController.text.trim(),
-        volumeProduk: int.tryParse(volumeProdukController.text.trim()) ?? 0,
-        idSatuan: selectedSatuanId!, // ← Kirim id_satuan
-      );
+  // Jika input manual → buat produk baru
+  if (isManualProduk) {
+    await api.createProduk(
+      kodeProduk: kodeProdukController.text.trim(),
+      namaProduk: namaProdukController.text.trim(),
+      volumeProduk: int.tryParse(volumeProdukController.text.trim()) ?? 0,
+      idSatuan: selectedSatuanId!,
+    );
+  }
 
-      // Jika input manual, simpan gudang baru ke database
-      if (isManualGudang) {
-        await api.createGudang(
-          namaGudang: gudangAsalController.text.trim(),
-          alamatGudang: alamatGudangAsalController.text.trim(),
-        );
-      }
+  // Jika input manual untuk gudang → tambah gudang baru
+  if (isManualGudang) {
+    await api.createGudang(
+      namaGudang: gudangAsalController.text.trim(),
+      alamatGudang: alamatGudangAsalController.text.trim(),
+    );
+  }
 
-      final data = {
-        "nama_produk": namaProdukController.text.trim(),
-        "kode_produk": kodeProdukController.text.trim(),
-        "volume_produk": volumeProdukController.text.trim(),
-        "gudang_asal": gudangAsalController.text.trim(),
-        "alamat_gudang_asal": alamatGudangAsalController.text.trim(),
-        "gudang_tujuan": gudangTujuanController.text.trim(),
-        "tanggal_masuk":
-            "${tanggalMasuk!.year}-${tanggalMasuk!.month.toString().padLeft(2, '0')}-${tanggalMasuk!.day.toString().padLeft(2, '0')}",
-        "deskripsi": deskripsiController.text.trim(),
-      };
-
+  final data = {
+    "nama_produk": namaProdukController.text.trim(),
+    "kode_produk": kodeProdukController.text.trim(),
+    "volume_produk": volumeProdukController.text.trim(),
+    "gudang_asal": gudangAsalController.text.trim(),
+    "alamat_gudang_asal": alamatGudangAsalController.text.trim(),
+    "gudang_tujuan": gudangTujuanController.text.trim(),
+    "tanggal_masuk":
+        "${tanggalMasuk!.year}-${tanggalMasuk!.month.toString().padLeft(2, '0')}-${tanggalMasuk!.day.toString().padLeft(2, '0')}",
+    "deskripsi": deskripsiController.text.trim(),
+  };
       final success = await api.createInbound(data);
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Inbound berhasil disimpan')),
-        );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
+      if (success == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        const SnackBar(content: Text('Inbound berhasil disimpan!')),
       );
-    } finally {
-      setState(() => isLoading = false);
-    }
+
+      Navigator.pop(context); // kembali ke halaman sebelumnya
+      }
+
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      } finally {
+        setState(() => isLoading = false);
+      }
+
   }
 
   Future<void> _loadUserGudang() async {
