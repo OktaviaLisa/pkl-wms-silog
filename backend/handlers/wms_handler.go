@@ -150,6 +150,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		for _, item := range inboundStocks {
 			response = append(response, map[string]interface{}{
 				"idOrders":           item.IdOrders,
+				"kode_produk":        item.Produk.KodeProduk,
 				"idProduk":           item.IdProduk,
 				"gudang_asal":        item.GudangAsalId,
 				"gudang_tujuan":      item.GudangTujuanId,
@@ -200,6 +201,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
 			"idOrders":           item.IdOrders,
+			"kode_produk":        item.Produk.KodeProduk,
 			"idProduk":           item.IdProduk,
 			"gudang_asal":        item.GudangAsalId,
 			"gudang_tujuan":      item.GudangTujuanId,
@@ -279,7 +281,6 @@ func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
 	newP := models.Produk{
 		KodeProduk: "AUTO-" + nama,
 		NamaProduk: nama,
-		Volume:     1,
 		IdSatuan:   1,
 	}
 
@@ -648,7 +649,7 @@ func (h *WMSHandler) GetInventory(c *gin.Context) {
 			"id_inventory": item.IdInventory,
 			"nama_produk":  item.Produk.NamaProduk,
 			"kode_produk":  item.Produk.KodeProduk,
-			"volume":       item.Produk.Volume,
+			"volume":       item.Volume,
 			"jenis_satuan": item.Produk.Satuan.JenisSatuan,
 		})
 	}
