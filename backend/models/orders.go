@@ -10,8 +10,10 @@ type Orders struct {
 	GudangAsalId   int `gorm:"column:gudang_asal" json:"gudang_asal"`
 	GudangTujuanId int `gorm:"column:gudang_tujuan" json:"gudang_tujuan"`
 
+	Volume       int       `gorm:"column:volume" json:"volume"`
 	TanggalMasuk time.Time `gorm:"column:tgl" json:"tanggal"`
 	Deskripsi    string    `gorm:"column:deskripsi" json:"deskripsi"`
+	Status       string    `gorm:"column:status;default:pending" json:"status"`
 
 	// RELASI – JSON TAG dengan nama berbeda untuk output
 	GudangAsal   Gudang `gorm:"foreignKey:GudangAsalId;references:IdGudang" json:"gudang_asal_obj,omitempty"`
