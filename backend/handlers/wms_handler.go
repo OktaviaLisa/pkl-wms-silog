@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -149,13 +150,16 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		var response []map[string]interface{}
 		for _, item := range inboundStocks {
 			response = append(response, map[string]interface{}{
+				"idInbound":          item.IdOrders,
 				"idOrders":           item.IdOrders,
 				"kode_produk":        item.Produk.KodeProduk,
 				"idProduk":           item.IdProduk,
 				"gudang_asal":        item.GudangAsalId,
 				"gudang_tujuan":      item.GudangTujuanId,
+				"volume":             item.Volume,
 				"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
 				"deskripsi":          item.Deskripsi,
+				"status":             item.Status,
 				"nama_produk":        item.Produk.NamaProduk,
 				"nama_gudang_asal":   item.GudangAsal.NamaGudang,
 				"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
@@ -200,13 +204,16 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	var response []map[string]interface{}
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
+			"idInbound":          item.IdOrders,
 			"idOrders":           item.IdOrders,
 			"kode_produk":        item.Produk.KodeProduk,
 			"idProduk":           item.IdProduk,
 			"gudang_asal":        item.GudangAsalId,
 			"gudang_tujuan":      item.GudangTujuanId,
+			"volume":             item.Volume,
 			"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
 			"deskripsi":          item.Deskripsi,
+			"status":             item.Status,
 			"nama_produk":        item.Produk.NamaProduk,
 			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
 			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
@@ -316,6 +323,7 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 		NamaProduk   string `json:"nama_produk"`
 		GudangAsal   string `json:"gudang_asal"`
 		GudangTujuan string `json:"gudang_tujuan"`
+		Volume       int    `json:"volume"`
 		TanggalMasuk string `json:"tanggal_masuk"`
 		Deskripsi    string `json:"deskripsi"`
 	}
@@ -358,6 +366,7 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 		IdProduk:       idProduk,
 		GudangAsalId:   idGudangAsal,
 		GudangTujuanId: idGudangTujuan,
+		Volume:         input.Volume,
 		TanggalMasuk:   tanggal,
 		Deskripsi:      input.Deskripsi,
 	}
@@ -669,4 +678,71 @@ func (h *WMSHandler) GetInventory(c *gin.Context) {
 		"message": "Inventory retrieved successfully",
 		"data":    response,
 	})
+}
+
+func (h *WMSHandler) AddInventory(c *gin.Context) {
+	var input struct {
+		IdProduk int `json:"idProduk"`
+		IdGudang int `json:"idGudang"`
+		Volume   int `json:"volume"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var inventory models.Inventory
+	err := h.db.Where("idProduk = ? AND idGudang = ?", input.IdProduk, input.IdGudang).
+		First(&inventory).Error
+
+	// Jika belum ada → buat baru
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		newStock := models.Inventory{
+			IdProduk: input.IdProduk,
+			IdGudang: input.IdGudang,
+			Volume:   input.Volume,
+		}
+		h.db.Create(&newStock)
+		c.JSON(http.StatusOK, gin.H{"message": "Inventory baru dibuat", "data": newStock})
+		return
+	}
+
+	// Jika sudah ada → update stok (add)
+	inventory.Volume += input.Volume
+	h.db.Save(&inventory)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Stok berhasil ditambahkan",
+		"data":    inventory,
+	})
+}
+
+func (h *WMSHandler) UpdateOrderStatus(c *gin.Context) {
+	IdOrders := c.Param("IdOrders") // FIX: hapus spasi
+
+	var input struct {
+		Status string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	result := h.db.Model(&models.Orders{}).
+		Where("IdOrders = ?", IdOrders).
+		Update("status", input.Status)
+
+	if result.Error != nil {
+		c.JSON(500, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(404, gin.H{"error": "Order not found"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Status updated"})
 }

@@ -3,11 +3,11 @@ package models
 type Inventory struct {
 	IdInventory int `gorm:"column:idInventory;primaryKey" json:"id_inventory"`
 	IdProduk    int `gorm:"column:idProduk" json:"id_produk"`
-	IDGudang    int `gorm:"column:idGudang" json:"id_gudang"`
+	IdGudang    int `gorm:"column:idGudang" json:"id_gudang"`
 	Volume      int `gorm:"column:volume" json:"volume"`
 
 	Produk Produk `gorm:"foreignKey:IdProduk;references:IdProduk" json:"produk"`
-	Gudang Gudang `gorm:"foreignKey:IDGudang;references:IdGudang" json:"gudang"`
+	Gudang Gudang `gorm:"foreignKey:IdGudang;references:IdGudang" json:"gudang"`
 }
 
 func (Inventory) TableName() string {

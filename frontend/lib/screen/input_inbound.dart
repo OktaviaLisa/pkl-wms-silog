@@ -130,7 +130,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   final data = {
     "nama_produk": namaProdukController.text.trim(),
     "kode_produk": kodeProdukController.text.trim(),
-    "volume_produk": volumeProdukController.text.trim(),
+    "volume": int.tryParse(volumeProdukController.text.trim()) ?? 0,
     "gudang_asal": gudangAsalController.text.trim(),
     "alamat_gudang_asal": alamatGudangAsalController.text.trim(),
     "gudang_tujuan": gudangTujuanController.text.trim(),
