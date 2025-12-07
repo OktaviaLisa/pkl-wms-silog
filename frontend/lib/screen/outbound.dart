@@ -21,13 +21,13 @@ class _OutboundPageState extends State<OutboundPage> {
   void _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUserId = prefs.getInt('user_id');
-    
+
     print('🔍 Loading outbound data untuk user ID: $currentUserId');
-    
+
     if (currentUserId != null) {
       loadOutbound();
     } else {
-      print('⚠️ User belum login');
+      print('⚠ User belum login');
       setState(() {
         isLoading = false;
       });
@@ -45,9 +45,9 @@ class _OutboundPageState extends State<OutboundPage> {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -79,55 +79,61 @@ class _OutboundPageState extends State<OutboundPage> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : OutboundList.isEmpty
-              ? Center(child: Text("Tidak ada data outbound"))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: OutboundList.length,
-                  itemBuilder: (context, index) {
-                    final item = OutboundList[index];
+          ? Center(child: Text("Tidak ada data outbound"))
+          : ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: OutboundList.length,
+              itemBuilder: (context, index) {
+                final item = OutboundList[index];
 
-                    return Card(
-                      elevation: 3,
-                      shadowColor: Colors.black26,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return Card(
+                  elevation: 3,
+                  shadowColor: Colors.black26,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // NAMA PRODUK
+                        Row(
                           children: [
-                            // NAMA PRODUK
-                            Row(
-                              children: [
-                                const Icon(Icons.logout, color: Color(0xFF960B07)),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Nama Produk: ${item['nama_produk'] ?? 'ID: ${item['idProduk']}'}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
+                            const Icon(Icons.logout, color: Color(0xFF960B07)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Nama Produk: ${item['nama_produk'] ?? 'ID: ${item['idProduk']}'}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                              ],
+                              ),
                             ),
-
-                            const SizedBox(height: 10),
-
-                            // DETAIL
-                            Text("Gudang Asal: ${item['nama_gudang_asal'] ?? item['gudang_asal']}"),
-                            Text("Gudang Tujuan: ${item['nama_gudang_tujuan'] ?? item['gudang_tujuan']}"),
-                            Text("Tanggal Keluar: ${item['tgl_keluar']}"),
-                            Text("Deskripsi: ${item['deskripsi']}"),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
+
+                        const SizedBox(height: 10),
+
+                        // DETAIL
+                        Text(
+                          "Gudang Asal: ${item['nama_gudang_asal'] ?? item['gudang_asal']}",
+                        ),
+                        Text(
+                          "Gudang Tujuan: ${item['nama_gudang_tujuan'] ?? item['gudang_tujuan']}",
+                        ),
+                        Text(
+                          "Tanggal Keluar: ${item['tanggal_keluar'] ?? item['tgl_keluar']}",
+                        ),
+                        Text("Deskripsi: ${item['deskripsi']}"),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

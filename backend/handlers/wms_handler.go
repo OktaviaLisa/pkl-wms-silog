@@ -403,43 +403,38 @@ func (h *WMSHandler) CreateGudang(c *gin.Context) {
 func (h *WMSHandler) GetOutbound(c *gin.Context) {
 	userID := c.Query("user_id")
 	fmt.Printf("🔍 GetOutbound dipanggil dengan user_id: %s\n", userID)
+	fmt.Printf("🔍 Request method: %s, URL: %s\n", c.Request.Method, c.Request.URL.String())
 
 	if userID == "" {
 		// Tampilkan semua data jika tidak ada user_id
-		var outbound []models.Outbound
+		var outboundStocks []models.Orders
 		result := h.db.
 			Preload("Produk").
-			Preload("GudangAsalObj").
-			Preload("GudangTujuanObj").
-			Order("idOutbound DESC").
-			Find(&outbound)
+			Preload("GudangAsal").
+			Preload("GudangTujuan").
+			Find(&outboundStocks)
+
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 			return
 		}
 
 		var response []map[string]interface{}
-		for _, item := range outbound {
-			// Format tanggal ke DD-MM-YYYY
-			formattedDate := item.TglKeluar.Format("02-01-2006")
-
+		for _, item := range outboundStocks {
 			response = append(response, map[string]interface{}{
-				"idOutbound":         item.IDOutbound,
-				"idProduk":           item.IDProduk,
-				"gudang_asal":        item.GudangAsal,
-				"gudang_tujuan":      item.GudangTujuan,
-				"tgl_keluar":         formattedDate,
+				"idOrders":           item.IdOrders,
+				"idProduk":           item.IdProduk,
+				"gudang_asal":        item.GudangAsalId,
+				"gudang_tujuan":      item.GudangTujuanId,
+				"tanggal_keluar":     item.TanggalMasuk.Format("02-01-2006"),
 				"deskripsi":          item.Deskripsi,
 				"nama_produk":        item.Produk.NamaProduk,
-				"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
-				"nama_gudang_tujuan": item.GudangTujuanObj.NamaGudang,
+				"nama_gudang_asal":   item.GudangAsal.NamaGudang,
+				"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Outbound retrieved successfully",
-			"data":    response,
-		})
+		c.JSON(http.StatusOK, gin.H{"data": response})
 		return
 	}
 
@@ -451,37 +446,47 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 		return
 	}
 
-	// Filter berdasarkan gudang_asal = role_gudang user
-	var outbound []models.Outbound
+	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
+
+	// Filter berdasarkan gudang_asal = role_gudang user (KEBALIKAN dari inbound)
+	var outboundStocks []models.Orders
 	result := h.db.
 		Preload("Produk").
-		Preload("GudangAsalObj").
-		Preload("GudangTujuanObj").
+		Preload("GudangAsal").
+		Preload("GudangTujuan").
 		Where("gudang_asal = ?", user.RoleGudang).
-		Order("idOutbound DESC").
-		Find(&outbound)
+		Order("idOrders DESC").
+		Find(&outboundStocks)
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
-	var response []map[string]interface{}
-	for _, item := range outbound {
-		// Format tanggal ke DD-MM-YYYY (sama seperti inbound)
-		formattedDate := item.TglKeluar.Format("02-01-2006")
+	fmt.Printf("📦 Ditemukan %d data outbound untuk gudang %d\n", len(outboundStocks), user.RoleGudang)
 
-		response = append(response, map[string]interface{}{
-			"idOutbound":         item.IDOutbound,
-			"idProduk":           item.IDProduk,
-			"gudang_asal":        item.GudangAsal,
-			"gudang_tujuan":      item.GudangTujuan,
-			"tgl_keluar":         formattedDate,
+	var response []map[string]interface{}
+	for _, item := range outboundStocks {
+		// Debug: tampilkan nilai tanggal mentah
+		fmt.Printf("📅 Raw tanggal untuk idOrders %d: %v (IsZero: %v)\n", item.IdOrders, item.TanggalMasuk, item.TanggalMasuk.IsZero())
+
+		// Format tanggal sama seperti inbound
+		formattedDate := item.TanggalMasuk.Format("02-01-2006")
+		fmt.Printf("📅 Formatted tanggal: '%s'\n", formattedDate)
+
+		responseItem := map[string]interface{}{
+			"idOrders":           item.IdOrders,
+			"idProduk":           item.IdProduk,
+			"gudang_asal":        item.GudangAsalId,
+			"gudang_tujuan":      item.GudangTujuanId,
+			"tanggal_keluar":     formattedDate,
 			"deskripsi":          item.Deskripsi,
 			"nama_produk":        item.Produk.NamaProduk,
-			"nama_gudang_asal":   item.GudangAsalObj.NamaGudang,
-			"nama_gudang_tujuan": item.GudangTujuanObj.NamaGudang,
-		})
+			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
+			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
+		}
+		fmt.Printf("📦 Response item: %+v\n", responseItem)
+		response = append(response, responseItem)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -491,69 +496,74 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 }
 
 func (h *WMSHandler) CreateOutbound(c *gin.Context) {
-	// request expects idProduk as integer, gudang_asal/tujuan as string
 	var input struct {
-		IDProduk     int    `json:"idProduk"`
+		IdProduk     int    `json:"idProduk"`
 		GudangAsal   string `json:"gudang_asal"`
 		GudangTujuan string `json:"gudang_tujuan"`
 		TglKeluar    string `json:"tgl_keluar"`
 		Deskripsi    string `json:"deskripsi"`
+		Volume       int    `json:"volume"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		// return error detail to help debugging
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// validate minimal
-	if input.IDProduk == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "idProduk harus diisi dan bukan 0"})
-		return
-	}
-	if input.GudangAsal == "" || input.GudangTujuan == "" || input.TglKeluar == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Field gudang_asal, gudang_tujuan, tgl_keluar wajib diisi"})
+	if input.IdProduk == 0 || input.GudangAsal == "" || input.GudangTujuan == "" || input.TglKeluar == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Semua field wajib diisi"})
 		return
 	}
 
-	// Get or create gudang asal
+	if input.Volume <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Volume harus lebih dari 0"})
+		return
+	}
+
 	idAsal, err := h.GetOrCreateGudang(input.GudangAsal)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat/ambil gudang asal"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal ambil gudang asal"})
 		return
 	}
 
-	// Get or create gudang tujuan
 	idTujuan, err := h.GetOrCreateGudang(input.GudangTujuan)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat/ambil gudang tujuan"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal ambil gudang tujuan"})
 		return
 	}
 
-	// Parse tanggal ke time.Time
 	tanggal, err := time.Parse("2006-01-02", input.TglKeluar)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format tgl_keluar tidak valid, gunakan YYYY-MM-DD"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format tanggal salah (YYYY-MM-DD)"})
 		return
 	}
 
-	// Build outbound model
-	outbound := models.Outbound{
-		IDProduk:     uint(input.IDProduk),
-		GudangAsal:   uint(idAsal),
-		GudangTujuan: uint(idTujuan),
-		TglKeluar:    tanggal,
-		Deskripsi:    input.Deskripsi,
+	// Ambil data produk untuk mendapatkan satuan
+	var produk models.Produk
+	if err := h.db.Preload("Satuan").Where("idProduk = ?", input.IdProduk).First(&produk).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Produk tidak ditemukan"})
+		return
+	}
+
+	outbound := models.Orders{
+		IdProduk:       input.IdProduk,
+		GudangAsalId:   idAsal,
+		GudangTujuanId: idTujuan,
+		TanggalMasuk:   tanggal,
+		Volume:         input.Volume,
+		Deskripsi:      input.Deskripsi,
+		Status:         "outbound",
 	}
 
 	if err := h.db.Create(&outbound).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat outbound: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal simpan outbound: " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Outbound created successfully",
-		"data":    outbound,
+		"message":      "Outbound created successfully",
+		"data":         outbound,
+		"jenis_satuan": produk.Satuan.JenisSatuan,
 	})
 }
 
@@ -642,11 +652,12 @@ func (h *WMSHandler) GetInventory(c *gin.Context) {
 		return
 	}
 
-	// Format response untuk frontend
 	var response []map[string]interface{}
 	for _, item := range inventory {
+		fmt.Printf("📦 Produk ID: %d, IdSatuan: %d, Satuan: %+v\n", item.IdProduk, item.Produk.IdSatuan, item.Produk.Satuan)
 		response = append(response, map[string]interface{}{
 			"id_inventory": item.IdInventory,
+			"idProduk":     item.IdProduk,
 			"nama_produk":  item.Produk.NamaProduk,
 			"kode_produk":  item.Produk.KodeProduk,
 			"volume":       item.Volume,
