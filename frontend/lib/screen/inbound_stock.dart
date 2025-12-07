@@ -90,48 +90,77 @@ class _InboundPageState extends State<InboundPage> {
                   ),
                 );
               },
-              child: Card(
-                elevation: 3,
-                shadowColor: Colors.black26,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.inventory_2,
-                            color: Color(0xFF960B07),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              "Kode Produk: ${item["kode_produk"]}\n"
-                              "Nama Produk: ${item["nama_produk"]}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+       child: Card(
+              elevation: 3,
+              shadowColor: Colors.black26,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.inventory_2,
+                              color: Color(0xFF960B07),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Kode Produk: ${item["kode_produk"]}\n"
+                                "Nama Produk: ${item["nama_produk"]}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
 
-                      const SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
-                      Text("Gudang Asal: ${item["nama_gudang_asal"]}"),
-                      Text("Gudang Tujuan: ${item["nama_gudang_tujuan"]}"),
-                      Text("Tanggal Masuk: ${item["tanggal_masuk"]}"),
-                      Text("Deskripsi: ${item["deskripsi"]}"),
-                    ],
+                        Text("Gudang Asal: ${item["nama_gudang_asal"]}"),
+                        Text("Gudang Tujuan: ${item["nama_gudang_tujuan"]}"),
+                        Text("Tanggal Masuk: ${item["tanggal_masuk"]}"),
+                        Text("Deskripsi: ${item["deskripsi"]}"),
+                      ],
+                    ),
                   ),
-                ),
+
+                  // ==================== BADGE STATUS ====================
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: item["status"] == "pending"
+                            ? Colors.orange
+                            : item["status"] == "processed"
+                                ? Colors.green
+                                : Colors.grey,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        item["status"].toString().toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
+            )
             );
 
             },

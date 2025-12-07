@@ -382,4 +382,48 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<bool> addInventory(Map<String, dynamic> payload) async {
+    final url = Uri.parse("$baseUrl/api/inventory/add");
+
+    try {
+      print('🔍 Sending to: $url');
+      print('🔍 Payload: $payload');
+      
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      );
+
+      print('🔍 Response status: ${response.statusCode}');
+      print('🔍 Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print('❌ Error: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      return false;
+    }
+  }
+
+  //---------------------------------------------------------
+  // 13. UPDATE INBOUND STATUS → Update status inbound_stock
+  //---------------------------------------------------------
+  Future<bool> updateOrderStatus(int idOrder, String status) async {
+  final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
+
+  final response = await http.put(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({"status": status}),
+  );
+
+  return response.statusCode == 200;
+}
+
 }
