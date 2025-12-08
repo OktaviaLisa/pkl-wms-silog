@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import 'register.dart';
 import 'login.dart';
 import 'admin_inventory.dart'; 
+import 'admin_gudang.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -93,7 +94,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AdminInventoryPage(),
+                          builder: (context) => const AdminGudangPage(),
                         ),
                       );
                     },
