@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static const String baseUrl = "http://localhost:8081";
 
-  // 1. PING SERVER → cek apakah backend aktif
+  // PING SERVER → cek apakah backend aktif
   Future<String> pingServer() async {
     final url = Uri.parse("$baseUrl/ping");
 
@@ -22,7 +22,7 @@ class ApiService {
     }
   }
 
-  // 2. GET USERS → Ambil data user dari backend
+  // GET USERS → Ambil data user dari backend
   Future<List<dynamic>> getAllUsers() async {
     final url = Uri.parse("$baseUrl/api/user/user");
 
@@ -45,7 +45,7 @@ class ApiService {
     return await getAllUsers();
   }
 
-  // 3. LOGIN
+  // LOGIN
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -72,7 +72,7 @@ class ApiService {
     }
   }
 
-  // 4. CREATE USER
+  // CREATE USER
   Future<Map<String, dynamic>> createUser({
     required String email,
     required String username,
@@ -106,7 +106,7 @@ class ApiService {
     }
   }
 
-  // 5. GET INBOUND LIST
+  // GET INBOUND LIST
   Future<List<dynamic>> getInbound({int? userId}) async {
     String urlString = "$baseUrl/api/inbound/list";
     if (userId != null) {
@@ -151,7 +151,7 @@ class ApiService {
     }
   }
 
-  // 6. GET PRODUK
+  // GET PRODUK
   Future<List<dynamic>> getProduk() async {
     final url = Uri.parse("$baseUrl/api/produk/list");
 
@@ -170,7 +170,7 @@ class ApiService {
     }
   }
 
-  // 7. GET GUDANG
+  // GET GUDANG
   Future<List<dynamic>> getGudang() async {
     final url = Uri.parse("$baseUrl/api/gudang/list");
 
@@ -189,7 +189,7 @@ class ApiService {
     }
   }
 
-  // 8. GET SATUAN
+  // GET SATUAN
   Future<List<dynamic>> getSatuan() async {
     final url = Uri.parse("$baseUrl/api/satuan/list");
 
@@ -208,7 +208,7 @@ class ApiService {
     }
   }
 
-  // 9. CREATE PRODUK
+  // CREATE PRODUK
   Future<bool> createProduk({
     required String kodeProduk,
     required String namaProduk,
@@ -236,7 +236,7 @@ class ApiService {
     }
   }
 
-  // 10. CREATE GUDANG
+  // CREATE GUDANG
   Future<bool> createGudang({
     required String namaGudang,
     required String alamatGudang,
@@ -260,7 +260,7 @@ class ApiService {
     }
   }
 
-  // 11. OUTBOUND
+  // OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
     String urlString = "$baseUrl/api/outbound/getOutbound";
     if (userId != null) {
@@ -305,7 +305,7 @@ class ApiService {
     }
   }
 
-  // 12. GET USER GUDANG
+  // GET USER GUDANG
   Future<Map<String, dynamic>> getUserGudang({required int userId}) async {
     final url = Uri.parse("$baseUrl/api/gudang/user?user_id=$userId");
 
@@ -363,7 +363,7 @@ class ApiService {
     }
   }
 
-  // 13. GET INVENTORY BY WAREHOUSE — FIXED
+  // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
     final url = Uri.parse(
         "$baseUrl/api/inventory/by-warehouse?id_gudang=$idGudang");
@@ -411,9 +411,8 @@ class ApiService {
     }
   }
 
-  //---------------------------------------------------------
-  // 13. UPDATE INBOUND STATUS → Update status inbound_stock
-  //---------------------------------------------------------
+  // UPDATE INBOUND STATUS → Update status inbound_stock
+
   Future<bool> updateOrderStatus(int idOrder, String status) async {
   final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
 
@@ -424,6 +423,35 @@ class ApiService {
   );
 
   return response.statusCode == 200;
+}
+
+// GET INVENTORY BY WAREHOUSE — FIXED
+
+ Future<List<dynamic>> getAllInventory() async {
+  final url = Uri.parse("$baseUrl/api/inventory/all");
+
+  try {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return (data["data"] as List).map((item) {
+        return {
+          "gudang": item["gudang"] ?? "",
+          "nama_produk": item["nama_produk"] ?? "",
+          "volume": item["volume"] ?? 0,
+          "jenis_satuan": item["jenis_satuan"] ?? "",
+          "kode_produk": item["kode_produk"] ?? "",
+        };
+      }).toList();
+    } else {
+      throw Exception("Failed to load all inventory");
+    }
+  } catch (e) {
+    print("ERROR API GET ALL INVENTORY: $e");
+    rethrow;
+  }
 }
 
 }
