@@ -1,121 +1,22 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
-class AdminInventoryPage extends StatelessWidget {
+class AdminInventoryPage extends StatefulWidget {
   const AdminInventoryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<String> warehouses = [
-      "Gudang A",
-      "Gudang B",
-      "Gudang C",
-      "Gudang D",
-      "Gudang E",
-      "Gudang F",
-    ];
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF7B1E1E),
-        title: const Text(
-          "Inventory",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: GridView.builder(
-                itemCount: warehouses.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,       
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.9,   
-              ),
-
-                itemBuilder: (context, index) {
-                  return _warehouseCard(
-                    context,
-                    warehouses[index],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _warehouseCard(BuildContext context, String warehouseName) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                WarehouseInventoryPage(warehouseName: warehouseName),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-              color: const Color(0xFF7B1E1E),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                warehouseName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-      ),
-    );
-  }
+  State<AdminInventoryPage> createState() => _AdminInventoryPageState();
 }
 
-// HALAMAN DETAIL INVENTORY GUDANG
-
-class WarehouseInventoryPage extends StatefulWidget {
-  final String warehouseName;
-
-  const WarehouseInventoryPage({super.key, required this.warehouseName});
-
-  @override
-  State<WarehouseInventoryPage> createState() => _WarehouseInventoryPageState();
-}
-
-class _WarehouseInventoryPageState extends State<WarehouseInventoryPage> {
+class _AdminInventoryPageState extends State<AdminInventoryPage> {
   final ApiService apiService = ApiService();
 
-  bool loading = true;
-  List<dynamic> inventory = [];
+  List<dynamic> allInventories = [];
+  List<dynamic> filteredInventories = [];
 
-  // Mapping nama gudang → ID
-  final Map<String, int> warehouseIdMap = {
-    "Gudang A": 1,
-    "Gudang B": 2,
-    "Gudang C": 3,
-    "Gudang D": 4,
-    "Gudang E": 5,
-    "Gudang F": 6,
-  };
+  bool loading = true;
+  String searchQuery = "";
+  String? selectedWarehouse;
 
   @override
   void initState() {
@@ -125,14 +26,11 @@ class _WarehouseInventoryPageState extends State<WarehouseInventoryPage> {
 
   Future<void> fetchInventory() async {
     try {
-      // ambil ID sesuai nama
-      final idGudang = warehouseIdMap[widget.warehouseName] ?? 0;
-
-      // panggil API yang benar (ID bukan nama)
-      final data = await apiService.getInventoryByWarehouse(idGudang);
+      final data = await apiService.getAllInventory();
 
       setState(() {
-        inventory = data;
+        allInventories = data;
+        filteredInventories = data;
         loading = false;
       });
     } catch (e) {
@@ -141,65 +39,151 @@ class _WarehouseInventoryPageState extends State<WarehouseInventoryPage> {
     }
   }
 
+  void applyFilter() {
+    List<dynamic> result = allInventories;
+
+    if (selectedWarehouse != null && selectedWarehouse!.isNotEmpty) {
+      result =
+          result.where((e) => e['gudang'] == selectedWarehouse).toList();
+    }
+
+    if (searchQuery.isNotEmpty) {
+      result = result
+          .where((e) => e['nama_produk']
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    setState(() => filteredInventories = result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: const Color(0xFF7B1E1E),
-        title: Text(
-          widget.warehouseName,
-          style: const TextStyle(color: Colors.white),
+        title: const Text(
+          "Inventory",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
+
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : inventory.isEmpty
-              ? const Center(
-                  child: Text(
-                    "Inventory kosong",
-                    style: TextStyle(fontSize: 20, color: Colors.grey),
+          : Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  // -------------------- SEARCH + FILTER BAR --------------------
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          onChanged: (v) {
+                            searchQuery = v;
+                            applyFilter();
+                          },
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            hintText: "Cari nama produk...",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      Expanded(
+                        flex: 1,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedWarehouse,
+                          onChanged: (value) {
+                            selectedWarehouse = value;
+                            applyFilter();
+                          },
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            labelText: "Filter Gudang",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text("Semua Gudang"),
+                            ),
+                            ...allInventories
+                                .map((e) => e['gudang'])
+                                .toSet()
+                                .map((g) => DropdownMenuItem(
+                                      value: g,
+                                      child: Text(g),
+                                    ))
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(18),
-                  itemCount: inventory.length,
-                  itemBuilder: (context, index) {
-                    final item = inventory[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.07),
-                            blurRadius: 5,
-                          ),
-                        ],
+
+                  const SizedBox(height: 24),
+
+                  // -------------------- TABEL DATA --------------------
+                  Expanded(
+  child: SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: MediaQuery.of(context).size.width,
+      ),
+      child: SingleChildScrollView(
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(Color(0xFF7B1E1E)),
+          headingTextStyle: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+          dataRowHeight: 56,
+          columnSpacing: 60,
+          dividerThickness: .5,
+          columns: const [
+            DataColumn(label: Text("Gudang")),
+            DataColumn(label: Text("Produk")),
+            DataColumn(label: Text("Quantity")),
+            DataColumn(label: Text("Satuan")),
+          ],
+          rows: List.generate(filteredInventories.length, (index) {
+            final item = filteredInventories[index];
+            final isEven = index % 2 == 0;
+            return DataRow(
+              color: MaterialStateProperty.all(
+                isEven ? Colors.white : Color(0xFFEFF4F9),
+              ),
+              cells: [
+              DataCell(Text(item['gudang'] ?? "-")),
+              DataCell(Text(item['nama_produk'] ?? "-")),
+              DataCell(Text(item['volume'].toString())),
+              DataCell(Text(item['jenis_satuan'] ?? "-")),
+                            ],
+                            );
+                          }),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            item['nama_item'],
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "Qty: ${item['quantity']}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
