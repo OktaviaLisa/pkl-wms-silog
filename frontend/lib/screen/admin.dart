@@ -69,21 +69,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   _sidebarItem(Icons.dashboard, 'Dashboard', onTap: () {}),
 
-                  // → Updated to open AdminInventoryPage
-                  _sidebarItem(
-                    Icons.inventory,
-                    'Inventory',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminInventoryPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  // FITUR MASTER ADMIN //
 
-                  _sidebarItem(
+                    _sidebarItem(
                     Icons.group,
                     'User Management',
                     onTap: () {
@@ -97,9 +85,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       });
                     },
                   ),
-
-                  _sidebarItem(Icons.local_shipping, 'Inbound', onTap: () {}),
-                  _sidebarItem(Icons.logout, 'Outbound', onTap: () {}),
+                    
+                    _sidebarItem(
+                    Icons.inventory,
+                    'Gudang',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminInventoryPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  _sidebarItem(
+                    Icons.inventory,
+                    'Inventory',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminInventoryPage(),
+                        ),
+                      );
+                    },
+                  ),
 
                   const Spacer(),
 
