@@ -764,23 +764,9 @@ func (h *WMSHandler) GetAllInventory(c *gin.Context) {
 
     var response []map[string]interface{}
     for _, item := range inventory {
-        // Debug logging detail
-        fmt.Printf("DEBUG - Inventory ID: %d, Produk: %s, IdSatuan: %d, Satuan: '%s'\n", 
-            item.IdInventory, item.Produk.NamaProduk, item.Produk.IdSatuan, item.Produk.Satuan.JenisSatuan)
-        
-        // Mapping satuan berdasarkan kode produk
-        var jenisSatuan string
-        switch item.Produk.KodeProduk {
-        case "1":
-            jenisSatuan = "Sak"
-        case "2":
-            jenisSatuan = "Ton"
-        case "3":
-            jenisSatuan = "Kg"
-        case "4":
-            jenisSatuan = "Pcs"
-        case "5":
-            jenisSatuan = "Karung"
+        jenisSatuan := item.Produk.Satuan.JenisSatuan
+        if jenisSatuan == "" {
+            jenisSatuan = "N/A"
         }
         
         response = append(response, map[string]interface{}{
