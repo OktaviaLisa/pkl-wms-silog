@@ -1,5 +1,7 @@
 package models
 
+import "backend/config"
+
 type Inventory struct {
 	IdInventory int `gorm:"column:idInventory;primaryKey" json:"id_inventory"`
 	IdProduk    int `gorm:"column:idProduk" json:"id_produk"`
@@ -13,3 +15,16 @@ type Inventory struct {
 func (Inventory) TableName() string {
 	return "inventory"
 }
+
+func GetAllInventory() ([]Inventory, error) {
+	var inventories []Inventory
+
+	result := config.DB.
+    Preload("Produk").
+    Preload("Produk.Satuan"). 
+    Preload("Gudang").
+    Find(&inventories)
+
+	return inventories, result.Error
+}
+
