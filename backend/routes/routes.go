@@ -25,6 +25,7 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.GET("/api/inventory/list", h.WMS.GetInventory)
 	r.POST("/api/inventory/add", h.WMS.AddInventory)
 	r.PUT("/api/orders/update-status/:IdOrders", h.WMS.UpdateOrderStatus)
+	r.GET("/api/inventory/all", h.WMS.GetAllInventory)
 
 	// tambah routes kamu lainnya di sini
 }
