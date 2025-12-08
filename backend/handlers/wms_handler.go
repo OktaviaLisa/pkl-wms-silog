@@ -746,3 +746,56 @@ func (h *WMSHandler) UpdateOrderStatus(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "Status updated"})
 }
+
+// GET ALL INVENTORY (admin inventory)
+func (h *WMSHandler) GetAllInventory(c *gin.Context) {
+    var inventory []models.Inventory
+
+    result := h.db.
+        Preload("Produk").
+        Preload("Produk.Satuan").
+        Preload("Gudang").
+        Find(&inventory)
+
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+        return
+    }
+
+    var response []map[string]interface{}
+    for _, item := range inventory {
+        // Debug logging detail
+        fmt.Printf("DEBUG - Inventory ID: %d, Produk: %s, IdSatuan: %d, Satuan: '%s'\n", 
+            item.IdInventory, item.Produk.NamaProduk, item.Produk.IdSatuan, item.Produk.Satuan.JenisSatuan)
+        
+        // Mapping satuan berdasarkan kode produk
+        var jenisSatuan string
+        switch item.Produk.KodeProduk {
+        case "1":
+            jenisSatuan = "Sak"
+        case "2":
+            jenisSatuan = "Ton"
+        case "3":
+            jenisSatuan = "Kg"
+        case "4":
+            jenisSatuan = "Pcs"
+        case "5":
+            jenisSatuan = "Karung"
+        }
+        
+        response = append(response, map[string]interface{}{
+            "id_inventory": item.IdInventory,
+            "nama_produk":  item.Produk.NamaProduk,
+            "kode_produk":  item.Produk.KodeProduk,
+            "volume":       item.Volume,
+            "jenis_satuan": jenisSatuan,
+            "gudang":       item.Gudang.NamaGudang,
+            "id_gudang":    item.IdGudang,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "All Inventory retrieved successfully",
+        "data":    response,
+    })
+}
