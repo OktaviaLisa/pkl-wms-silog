@@ -239,7 +239,7 @@ class ApiService {
   // CREATE GUDANG
   Future<bool> createGudang({
     required String namaGudang,
-    required String alamatGudang,
+    required String alamat_gudang,
   }) async {
     final url = Uri.parse("$baseUrl/api/gudang/create");
 
@@ -249,7 +249,7 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "nama_gudang": namaGudang,
-          "alamat": alamatGudang,
+          "alamat": alamat_gudang,
         }),
       );
 
