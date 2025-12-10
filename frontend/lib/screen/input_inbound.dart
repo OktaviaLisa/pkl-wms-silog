@@ -123,7 +123,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   if (isManualGudang) {
     await api.createGudang(
       namaGudang: gudangAsalController.text.trim(),
-      alamatGudang: alamatGudangAsalController.text.trim(),
+      alamat_gudang: alamatGudangAsalController.text.trim(),
     );
   }
 

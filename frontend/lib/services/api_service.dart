@@ -249,7 +249,7 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "nama_gudang": namaGudang,
-          "alamat": alamat_gudang,
+          "alamat_gudang": alamat_gudang,
         }),
       );
 

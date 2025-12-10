@@ -27,11 +27,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> fetchUsers() async {
     try {
-      final data = await apiService.getAllUsers(); // <<========== FIX
+      final data = await apiService.getAllUsers();
       setState(() {
         users = data;
         users.sort((a, b) =>
-        int.parse(a["idUser"].toString()).compareTo(int.parse(b["idUser"].toString())));
+            int.parse(a["idUser"].toString())
+                .compareTo(int.parse(b["idUser"].toString())));
         isLoading = false;
       });
     } catch (e) {
@@ -85,8 +86,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("Buat User Baru",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7B1E1E))
+                    const Text(
+                      "Buat User Baru",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF7B1E1E),
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -116,9 +122,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         suffixIcon: IconButton(
                           icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setStateDialog(() {
-                            obscurePassword = !obscurePassword;
-                          }),
+                          onPressed: () {
+                            setStateDialog(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
                         ),
                       ),
                     ),
@@ -142,6 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
+
                     const SizedBox(height: 24),
 
                     Row(
@@ -161,7 +170,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: () async {
                             if (selectedGudang == null) {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(content: Text("Pilih gudang dahulu")));
+                                  .showSnackBar(const SnackBar(
+                                content: Text("Pilih gudang dahulu"),
+                              ));
                               return;
                             }
 
@@ -191,49 +202,77 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: const Color(0xFF7B1E1E),
         title: const Text("User Management", style: TextStyle(color: Colors.white)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(top: 40, left: 24, right: 24), // ✅ jarak dari atas
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : users.isEmpty
-                ? const Center(child: Text("Tidak ada user terdaftar"))
-                : SingleChildScrollView(
+
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+
+                  // ==========================================
+                  //     TABLE FULL WIDTH SEPERTI INVENTORY
+                  // ==========================================
+                  Expanded(
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal, // ✅ scroll kanan–kiri
-                      child: DataTable(
-                        border: TableBorder.all(color: Colors.grey, width: 1),
-                        headingRowColor: MaterialStateColor.resolveWith(
-                          (states) => const Color(0xFF7B1E1E),
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.of(context).size.width,
                         ),
-                        headingTextStyle: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        child: SingleChildScrollView(
+                          child: DataTable(
+                            headingRowColor: MaterialStateProperty.all(const Color(0xFF7B1E1E)),
+                            headingTextStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                            dataRowHeight: 56,
+                            columnSpacing: 60,
+                            dividerThickness: .5,
+
+                            columns: const [
+                              DataColumn(label: Text("No")),
+                              DataColumn(label: Text("Email")),
+                              DataColumn(label: Text("Username")),
+                              DataColumn(label: Text("Gudang")),
+                              DataColumn(label: Text("Dibuat")),
+                            ],
+
+                            rows: List.generate(users.length, (index) {
+                              final user = users[index];
+                              final isEven = index % 2 == 0;
+
+                              return DataRow(
+                                color: MaterialStateProperty.all(
+                                  isEven ? Colors.white : const Color(0xFFEFF4F9),
+                                ),
+                                cells: [
+                                  DataCell(Text("${index + 1}")),
+                                  DataCell(Text(user["email"] ?? "-")),
+                                  DataCell(Text(user["username"] ?? "-")),
+                                  DataCell(Text(getGudangName(user["role_gudang"]))),
+                                  DataCell(Text(formatDate(user["created_at"]))),
+                                ],
+                              );
+                            }),
+                          ),
                         ),
-                        columns: const [
-                          DataColumn(label: Text("No")),
-                          DataColumn(label: Text("Email")),
-                          DataColumn(label: Text("Username")),
-                          DataColumn(label: Text("Role Gudang")),
-                          DataColumn(label: Text("Dibuat")),
-                        ],
-                        rows: List.generate(users.length, (index) {
-                          final user = users[index];
-                          return DataRow(cells: [
-                            DataCell(Center(child: Text("${index + 1}"))),
-                            DataCell(Text(user["email"] ?? "-")),
-                            DataCell(Text(user["username"] ?? "-")),
-                            DataCell(Center(child: Text(getGudangName(user["role_gudang"])))),
-                            DataCell(Center(child: Text(formatDate(user["created_at"])))),
-                          ]);
-                        }),
                       ),
                     ),
                   ),
-      ),
+                ],
+              ),
+            ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF7B1E1E),
         onPressed: showCreateUserDialog,
