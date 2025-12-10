@@ -106,6 +106,42 @@ class ApiService {
     }
   }
 
+  // UPDATE USER (ubah role gudang)
+ Future<bool> updateUser({
+  required int idUser,
+  required int roleGudang,
+}) async {
+  final url = Uri.parse('$baseUrl/api/user/update');
+
+  final response = await http.put(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "idUser": idUser,
+      "role_gudang": roleGudang,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception("Gagal update user");
+  }
+}
+
+  // DELETE USER
+  Future<bool> deleteUser(int idUser) async {
+  final url = Uri.parse('$baseUrl/api/user/delete/$idUser');
+
+  final response = await http.delete(url);
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception("Gagal hapus user");
+  }
+}
+
   // GET INBOUND LIST
   Future<List<dynamic>> getInbound({int? userId}) async {
     String urlString = "$baseUrl/api/inbound/list";
@@ -259,6 +295,7 @@ class ApiService {
       rethrow;
     }
   }
+  
 
   // OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
