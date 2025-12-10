@@ -21,7 +21,7 @@ func NewWMSHandler(db *gorm.DB) *WMSHandler {
 	return &WMSHandler{db: db}
 }
 
-// GET /api/user
+// USER
 func (h *WMSHandler) GetUser(c *gin.Context) {
 	var user []models.Users
 	result := h.db.Order("username").Find(&user)
@@ -127,6 +127,52 @@ func (h *WMSHandler) CreateUser(c *gin.Context) {
 		"message": "User berhasil dibuat",
 		"data":    user,
 	})
+}
+
+func (w *WMSHandler) UpdateUser(c *gin.Context) {
+    var req struct {
+        IdUser     int `json:"idUser"`
+        RoleGudang int `json:"role_gudang"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+
+    // GORM EXEC → result hanya 1 value
+    res := w.db.Exec("UPDATE users SET role_gudang = ? WHERE idUser = ?", req.RoleGudang, req.IdUser)
+
+    if res.Error != nil {
+        c.JSON(500, gin.H{"error": res.Error.Error()})
+        return
+    }
+
+    if res.RowsAffected == 0 {
+        c.JSON(404, gin.H{"error": "User tidak ditemukan"})
+        return
+    }
+
+    c.JSON(200, gin.H{"message": "User updated"})
+}
+
+func (w *WMSHandler) DeleteUser(c *gin.Context) {
+    idUser := c.Param("idUser")
+
+    // GORM EXEC
+    res := w.db.Exec("DELETE FROM users WHERE idUser = ?", idUser)
+
+    if res.Error != nil {
+        c.JSON(500, gin.H{"error": res.Error.Error()})
+        return
+    }
+
+    if res.RowsAffected == 0 {
+        c.JSON(404, gin.H{"error": "User tidak ditemukan"})
+        return
+    }
+
+    c.JSON(200, gin.H{"message": "User deleted"})
 }
 
 func (h *WMSHandler) GetInboundStock(c *gin.Context) {
@@ -457,7 +503,7 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 
 	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
 
-	// Filter berdasarkan gudang_asal = role_gudang user (KEBALIKAN dari inbound)
+	// Filter berdasarkan gudang_asal = role_gudang user
 	var outboundStocks []models.Orders
 	result := h.db.
 		Preload("Produk").
