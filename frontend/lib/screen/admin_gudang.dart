@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import '../services/api_service.dart';
 
 class AdminGudangPage extends StatefulWidget {
@@ -21,12 +21,14 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
 
   Future<void> fetchGudang() async {
     try {
-      final data = await apiService.getGudang(); // Ambil daftar gudang
+      final data = await apiService.getGudang();
       setState(() {
         gudangList = data;
+
         gudangList.sort((a, b) =>
             int.parse(a["id_gudang"].toString())
                 .compareTo(int.parse(b["id_gudang"].toString())));
+
         isLoading = false;
       });
     } catch (e) {
@@ -128,13 +130,26 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
-                        border: TableBorder.all(color: Colors.grey, width: 1),
                         headingRowColor:
-                            MaterialStateColor.resolveWith((_) => const Color(0xFF7B1E1E)),
+                            MaterialStateProperty.all(const Color(0xFF7B1E1E)),
                         headingTextStyle: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
+                        dataRowHeight: 55,
+                        headingRowHeight: 60,
+                        columnSpacing: 60,
+
+                        border: TableBorder(
+                          top: BorderSide.none,
+                          bottom: BorderSide.none,
+                          left: BorderSide.none,
+                          right: BorderSide.none,
+                          horizontalInside: BorderSide.none,
+                          verticalInside: BorderSide.none,
+                        ),
+
                         columns: const [
                           DataColumn(label: Text("No")),
                           DataColumn(label: Text("Nama Gudang")),
@@ -142,11 +157,21 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
                         ],
                         rows: List.generate(gudangList.length, (index) {
                           final g = gudangList[index];
+
                           return DataRow(
+                            color: MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                                return index.isEven
+                                    ? const Color(0xFFF3F6FA)
+                                    : Colors.white;
+                              },
+                            ),
                             cells: [
                               DataCell(Center(child: Text("${index + 1}"))),
+
+                              // FIX: ambil field yang benar
                               DataCell(Text(g["nama_gudang"] ?? "-")),
-                              DataCell(Text(g["alamat"] ?? "-")),
+                              DataCell(Text(g["alamat_gudang"] ?? "-")),
                             ],
                           );
                         }),
