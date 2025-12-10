@@ -67,6 +67,121 @@ class _RegisterPageState extends State<RegisterPage> {
     return g?["nama_gudang"] ?? "-";
   }
 
+
+  //      POPUP EDIT USER
+
+  void showEditUserDialog(Map user) {
+    int? selectedGudangEdit = user["role_gudang"];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Container(
+            width: 420,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Edit Role Gudang",
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7B1E1E)),
+                ),
+                const SizedBox(height: 20),
+
+                DropdownButtonFormField<int>(
+                  decoration: InputDecoration(
+                    labelText: "Pilih Gudang",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  value: selectedGudangEdit,
+                  items: gudangList.map<DropdownMenuItem<int>>((g) {
+                    return DropdownMenuItem(
+                      value: g["id_gudang"],
+                      child: Text(g["nama_gudang"]),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => selectedGudangEdit = value);
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      child: const Text("Batal"),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7B1E1E),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Simpan"),
+                      onPressed: () async {
+                        await apiService.updateUser(
+                          idUser: user["idUser"],
+                          roleGudang: selectedGudangEdit!,
+                        );
+
+                        Navigator.pop(context);
+                        fetchUsers();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  
+  //      POPUP HAPUS USER
+ 
+  void confirmDeleteUser(int idUser) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Yakin ingin menghapus?"),
+          content: const Text("User akan terhapus permanen."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await apiService.deleteUser(idUser);
+                Navigator.pop(context);
+                fetchUsers();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Hapus"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  //     CREATE USER 
+ 
   void showCreateUserDialog() {
     final emailController = TextEditingController();
     final usernameController = TextEditingController();
@@ -217,9 +332,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   const SizedBox(height: 12),
 
-                  // ==========================================
-                  //     TABLE FULL WIDTH SEPERTI INVENTORY
-                  // ==========================================
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -245,6 +357,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               DataColumn(label: Text("Username")),
                               DataColumn(label: Text("Gudang")),
                               DataColumn(label: Text("Dibuat")),
+                              DataColumn(label: Text("Aksi")), // ⬅ DITAMBAH
                             ],
 
                             rows: List.generate(users.length, (index) {
@@ -261,6 +374,23 @@ class _RegisterPageState extends State<RegisterPage> {
                                   DataCell(Text(user["username"] ?? "-")),
                                   DataCell(Text(getGudangName(user["role_gudang"]))),
                                   DataCell(Text(formatDate(user["created_at"]))),
+
+                                  //        Aksi
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.blue),
+                                          onPressed: () => showEditUserDialog(user),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () =>
+                                              confirmDeleteUser(user["idUser"]),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               );
                             }),
