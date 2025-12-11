@@ -171,7 +171,7 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
 
                               // FIX: ambil field yang benar
                               DataCell(Text(g["nama_gudang"] ?? "-")),
-                              DataCell(Text(g["alamat_gudang"] ?? "-")),
+                              DataCell(Text(g["alamat"] ?? "-")),
                             ],
                           );
                         }),
