@@ -593,13 +593,48 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 		return
 	}
 
-	// Ambil data produk untuk mendapatkan satuan
+	// Mulai database transaction
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Cek dan ambil data inventory di gudang asal
+	var inventory models.Inventory
+	if err := tx.Where("idProduk = ? AND idGudang = ?", input.IdProduk, idAsal).First(&inventory).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Stok produk tidak ditemukan di gudang asal"})
+		return
+	}
+
+	// 2. Validasi volume (double check dari backend)
+	if input.Volume > inventory.Volume {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Volume outbound (%d) melebihi stok tersedia (%d)", input.Volume, inventory.Volume),
+		})
+		return
+	}
+
+	// 3. Update inventory - kurangi volume
+	inventory.Volume -= input.Volume
+	if err := tx.Save(&inventory).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update inventory: " + err.Error()})
+		return
+	}
+
+	// 4. Ambil data produk untuk mendapatkan satuan
 	var produk models.Produk
-	if err := h.db.Preload("Satuan").Where("idProduk = ?", input.IdProduk).First(&produk).Error; err != nil {
+	if err := tx.Preload("Satuan").Where("idProduk = ?", input.IdProduk).First(&produk).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Produk tidak ditemukan"})
 		return
 	}
 
+	// 5. Buat record outbound
 	outbound := models.Orders{
 		IdProduk:       input.IdProduk,
 		GudangAsalId:   idAsal,
@@ -610,8 +645,15 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 		Status:         "outbound",
 	}
 
-	if err := h.db.Create(&outbound).Error; err != nil {
+	if err := tx.Create(&outbound).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal simpan outbound: " + err.Error()})
+		return
+	}
+
+	// 6. Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal commit transaction: " + err.Error()})
 		return
 	}
 
@@ -619,6 +661,7 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 		"message":      "Outbound created successfully",
 		"data":         outbound,
 		"jenis_satuan": produk.Satuan.JenisSatuan,
+		"sisa_stok":    inventory.Volume,
 	})
 }
 

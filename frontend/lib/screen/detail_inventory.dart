@@ -179,13 +179,20 @@ class _DetailInventoryPageState extends State<DetailInventoryPage> {
                     backgroundColor: const Color(0xFF960B07),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AddOutboundPage(),
                       ),
                     );
+                    
+                    // Refresh detail inventory jika outbound berhasil
+                    if (result == true) {
+                      _loadInventoryDetail();
+                      // Return true ke inventory list untuk refresh juga
+                      Navigator.pop(context, true);
+                    }
                   },
                   icon: const Icon(Icons.output, color: Colors.white),
                   label: const Text(

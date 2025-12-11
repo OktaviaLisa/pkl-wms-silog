@@ -175,7 +175,7 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
       String sat =
           _extractString(produk, ['jenis_satuan', 'jenisSatuan']) ??
           _getSatuanName(_extractInt(produk, ['id_satuan', 'idSatuan']));
-      
+
       print('📦 Jenis satuan: $sat');
 
       setState(() {
@@ -282,6 +282,37 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
       return;
     }
 
+    // Show confirmation dialog
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Simpan'),
+        content: Text(
+          'Apakah Anda yakin ingin menambahkan outbound ini?\n\n'
+          'Produk: ${namaProdukController.text}\n'
+          'Volume: $volKeluar $availableSatuan\n'
+          'Dari: ${gudangAsalController.text}\n'
+          'Ke: ${gudangTujuanController.text}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF960B07),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     // Build request payload; backend expects idProduk (int) and volume (int)
     final data = {
       "idProduk": selectedProduk,
@@ -294,21 +325,30 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
 
     setState(() => loading = true);
     try {
-      final success = await ApiService().createOutbound(data);
-      if (success == true) {
+      final response = await ApiService().createOutbound(data);
+      if (response == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outbound berhasil ditambahkan')),
+          const SnackBar(
+            content: Text(
+              'Outbound berhasil ditambahkan! Stok inventory telah diperbarui.',
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
+        // Return true untuk trigger refresh di halaman sebelumnya
         Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal menambah outbound')),
+          const SnackBar(
+            content: Text('Gagal menambah outbound'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error saat menyimpan: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     } finally {
       setState(() => loading = false);
     }

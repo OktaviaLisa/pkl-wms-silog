@@ -146,8 +146,8 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     isThreeLine: true,
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailInventoryPage(
@@ -156,6 +156,11 @@ class _InventoryPageState extends State<InventoryPage> {
                           ),
                         ),
                       );
+                      
+                      // Refresh inventory jika ada perubahan
+                      if (result == true) {
+                        _loadUserData();
+                      }
                     },
                   ),
                 );
