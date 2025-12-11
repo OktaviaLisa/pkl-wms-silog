@@ -141,15 +141,11 @@ class _InboundPageState extends State<InboundPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: item["status"] == "pending"
-                            ? Colors.orange
-                            : item["status"] == "processed"
-                                ? Colors.green
-                                : Colors.grey,
+                        color: _getStatusColor(item["status"]),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        item["status"].toString().toUpperCase(),
+                        _getStatusText(item["status"]),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -180,5 +176,33 @@ class _InboundPageState extends State<InboundPage> {
         },
       ),
     );
+  }
+
+  // Fungsi untuk mendapatkan warna status
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'pending':
+        return Colors.blue;
+      case 'qc':
+        return Colors.orange;
+      case 'processed':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Fungsi untuk mendapatkan teks status
+  String _getStatusText(String? status) {
+    switch (status) {
+      case 'pending':
+        return 'PENDING';
+      case 'qc':
+        return 'QC';
+      case 'processed':
+        return 'INVENTORY';
+      default:
+        return status?.toUpperCase() ?? 'UNKNOWN';
+    }
   }
 }

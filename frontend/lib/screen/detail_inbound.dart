@@ -105,7 +105,7 @@ class DetailInboundPage extends StatelessWidget {
 
                                       if (addSuccess) {
                                         bool updateSuccess =
-                                            await api.updateOrderStatus(data['idOrders'], 'processed');
+                                            await api.updateOrderStatus(data['idOrders'], 'inventory');
 
                                         if (updateSuccess) {
                                           ScaffoldMessenger.of(context).showSnackBar(
@@ -146,75 +146,146 @@ class DetailInboundPage extends StatelessWidget {
                     const SizedBox(width: 12),
 
                       // ===================== BUTTON QC (ORANGE + KONFIRMASI) =====================
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isQCDisabled() ? Colors.grey : const Color(0xFFFB8C00),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30)),
+                     Expanded(
+  child: ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor:
+          _isQCDisabled() ? Colors.grey : const Color(0xFFFB8C00),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30)),
+    ),
+    onPressed: _isQCDisabled()
+        ? null
+        : () {
+            TextEditingController catatanController =
+                TextEditingController();
+            DateTime? selectedDate;
+
+            showDialog(
+              context: context,
+              builder: (context) {
+                return StatefulBuilder(
+                  builder: (context, setState) {
+                    return AlertDialog(
+                      title: const Text("Input Quality Control"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: catatanController,
+                            decoration: const InputDecoration(
+                              labelText: "Catatan QC",
+                              border: OutlineInputBorder(),
+                            ),
+                            maxLines: 3,
                           ),
-                          onPressed: _isQCDisabled() ? null : () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text("Konfirmasi QC"),
-                                  content:
-                                      const Text("Data akan masuk proses Quality Control. Lanjutkan?"),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text("Batal"),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-
-                                        SharedPreferences prefs =
-                                            await SharedPreferences.getInstance();
-                                        final payload = {
-                                          "idOrders": data['idOrders'],
-                                          "catatan": "Produk diterima dan dicek",
-                                          "tgl_qc": DateTime.now().toIso8601String(),
-                                          "status_qc": "pending",
-                                        };
-
-                                        final api = ApiService();
-                                        bool qcSuccess = await api.addQualityControl(payload);
-
-                                        if (qcSuccess) {
-                                          await api.updateOrderStatus(data['idOrders'], 'qc');
-
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                                content: Text("Data berhasil masuk QC")),
-                                          );
-
-                                         Navigator.pushNamedAndRemoveUntil(
-                                          context,
-                                          '/quality-control',
-                                          (route) => false,
-                                        );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text("Gagal menyimpan QC")),
-                                          );
-                                        }
-                                      },
-                                      child: const Text("Lanjutkan"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: const Text(
-                            "Quality Control",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  selectedDate == null
+                                      ? "Pilih Tanggal QC"
+                                      : selectedDate!
+                                          .toIso8601String()
+                                          .substring(0, 10),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.calendar_month),
+                                onPressed: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      selectedDate = picked;
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
                       ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Batal"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (catatanController.text.isEmpty ||
+                                selectedDate == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      "Isi catatan & tanggal QC dulu"),
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.pop(context);
+
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
+
+                            final payload = {
+                              "idOrders": data['idOrders'],
+                              "catatan": catatanController.text,
+                              "tgl_qc": selectedDate!
+                                  .toIso8601String()
+                                  .substring(0, 10), // <-- FORMAT FIX
+                              "status_qc": "pending",
+                            };
+
+                            final api = ApiService();
+                            bool qcSuccess =
+                                await api.addQualityControl(payload);
+
+                            if (qcSuccess) {
+                              await api.updateOrderStatus(
+                                  data['idOrders'], 'qc');
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        "Data berhasil masuk QC")),
+                              );
+
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/quality-control',
+                                (route) => false,
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Gagal menyimpan QC")),
+                              );
+                            }
+                          },
+                          child: const Text("Simpan"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+    child: const Text(
+      "Quality Control",
+      style: TextStyle(color: Colors.white, fontSize: 16),
+    ),
+  ),
+),
                     ],
                   )
                   ],
