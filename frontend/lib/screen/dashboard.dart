@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               context,
                               "Quality Control",
                               Icons.verified,
-                              '/quality_control',
+                              '/quality-control'
                             ),
                             const SizedBox(width: 20),
 

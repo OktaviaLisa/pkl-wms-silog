@@ -62,133 +62,160 @@ class DetailInboundPage extends StatelessWidget {
                     const SizedBox(height: 25),
 
                     // ===== BUTTONS (SEKARANG ADA DI DALAM CARD) =====
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)),
-                            ),
-                            onPressed: () async {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text("Konfirmasi"),
-                                    content: const Text("Data akan disimpan ke inventory. Lanjutkan?"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text("Batal"),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () async {
-                                          Navigator.pop(context); // tutup dialog
-                                          
-                                          // Simpan ke inventory
-                                          SharedPreferences prefs = await SharedPreferences.getInstance();
-                                          final gudangId = prefs.getInt('role_gudang');
+                   Row(
+                  children: [
+                    // ===================== BUTTON INVENTORY (MERAH) =====================
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE53935), // 🔴 Merah
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text("Konfirmasi"),
+                                content: const Text("Data akan disimpan ke inventory. Lanjutkan?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Batal"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
 
-                                          print('🔍 Debug data: $data');
-                                          print('🔍 Debug gudangId: $gudangId');
+                                      SharedPreferences prefs = await SharedPreferences.getInstance();
+                                      final gudangId = prefs.getInt('role_gudang');
 
-                                          final payload = {
-                                            "idProduk": data['idProduk'] ?? data['id_produk'],
-                                            "idGudang": gudangId,
-                                            "volume": data['volume'] ?? 1,
-                                            "satuan": data['satuan'],
-                                          };
+                                      final payload = {
+                                        "idProduk": data['idProduk'] ?? data['id_produk'],
+                                        "idGudang": gudangId,
+                                        "volume": data['volume'] ?? 1,
+                                        "satuan": data['satuan'],
+                                      };
 
-                                          print('🔍 Debug payload: $payload');
+                                      final api = ApiService();
+                                      bool addSuccess = await api.addInventory(payload);
 
-                                          final api = ApiService();
-                                          
-                                          // 1. Tambah ke inventory
-                                          bool addSuccess = await api.addInventory(payload);
-                                          
-                                          if (addSuccess) {
-                                            // 2. Update status inbound_stock menjadi 'processed'
-                                            bool updateSuccess = await api.updateOrderStatus(data['idOrders'], 'processed');
+                                      if (addSuccess) {
+                                        bool updateSuccess =
+                                            await api.updateOrderStatus(data['idOrders'], 'processed');
 
-                                            
-                                            if (updateSuccess) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text("Berhasil dipindahkan ke inventory"))
-                                              );
-
-                                              // pindah ke halaman inventory
-                                              Navigator.pushNamed(context, '/inventory');  
-                                            }
-                                            else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text("Data ditambahkan ke inventory tapi gagal update status"))
-                                              );
-                                            }
-                                          } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text("Gagal memindahkan data"))
-                                            );
-                                          }
-                                        },
-                                        child: const Text("Lanjutkan"),
-                                      ),
-                                    ],
-                                  );
-                                },
+                                        if (updateSuccess) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                                content: Text("Berhasil dipindahkan ke inventory")),
+                                          );
+                                          Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          '/inventory',
+                                          (route) => false,
+                                        );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                                content: Text("Tambah inventory berhasil tapi gagal update status")),
+                                          );
+                                        }
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Gagal memindahkan data")),
+                                        );
+                                      }
+                                    },
+                                    child: const Text("Lanjutkan"),
+                                  ),
+                                ],
                               );
                             },
-                            child: const Text(
-                              "Inventory",
-                              style: TextStyle(color: Colors.white, fontSize: 16),
-                            ),
-                          ),
+                          );
+                        },
+                        child: const Text(
+                          "Inventory",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30)),
-                            ),
-                            onPressed: () async {
-                              SharedPreferences prefs = await SharedPreferences.getInstance();
-
-                              final gudangId = prefs.getInt('role_gudang');
-
-                              final payload = {
-                                "idProduk": data['id_produk'],
-                                "idGudang": gudangId,
-                                "volume": data['volume'],
-                              };
-
-                              final api = ApiService();
-                              bool success = await api.addInventory(payload);
-
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Berhasil menambahkan ke inventory"))
-                                );
-
-                                Navigator.pushNamed(context, '/inventory');
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Gagal menambahkan data"))
-                                );
-                              }
-                            },
-                            child: const Text(
-                              "QC",
-                              style: TextStyle(color: Colors.white, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+
+                    const SizedBox(width: 12),
+
+                      // ===================== BUTTON QC (ORANGE + KONFIRMASI) =====================
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFB8C00), // 🟧 Orange
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text("Konfirmasi QC"),
+                                  content:
+                                      const Text("Data akan masuk proses Quality Control. Lanjutkan?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text("Batal"),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+
+                                        SharedPreferences prefs =
+                                            await SharedPreferences.getInstance();
+                                        final payload = {
+                                          "idOrders": data['idOrders'],
+                                          "catatan": "Produk diterima dan dicek",
+                                          "tgl_qc": DateTime.now().toIso8601String(),
+                                          "status_qc": "pending",
+                                        };
+
+                                        final api = ApiService();
+                                        bool qcSuccess = await api.addQualityControl(payload);
+
+                                        if (qcSuccess) {
+                                          await api.updateOrderStatus(data['idOrders'], 'qc');
+
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                                content: Text("Data berhasil masuk QC")),
+                                          );
+
+                                         Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          '/quality-control',
+                                          (route) => false,
+                                        );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text("Gagal menyimpan QC")),
+                                          );
+                                        }
+                                      },
+                                      child: const Text("Lanjutkan"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: const Text(
+                            "Quality Control",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                   ],
                 ),
               ),

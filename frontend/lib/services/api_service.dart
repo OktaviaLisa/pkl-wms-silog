@@ -248,8 +248,6 @@ class ApiService {
   Future<bool> createProduk({
     required String kodeProduk,
     required String namaProduk,
-    required int volumeProduk,
-    required int idSatuan,
   }) async {
     final url = Uri.parse("$baseUrl/api/produk/create");
 
@@ -260,8 +258,6 @@ class ApiService {
         body: jsonEncode({
           "kode_produk": kodeProduk,
           "nama_produk": namaProduk,
-          "volume": volumeProduk,
-          "id_satuan": idSatuan,
         }),
       );
 
@@ -285,7 +281,7 @@ class ApiService {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "nama_gudang": namaGudang,
-          "alamat_gudang": alamat_gudang,
+          "alamat": alamat_gudang,
         }),
       );
 
@@ -380,25 +376,7 @@ class ApiService {
     }
   }
 
-  // GET PRODUK YANG TERSEDIA DI GUDANG
-  Future<List<dynamic>> getAvailableProduk({required int gudangId}) async {
-    final url =
-        Uri.parse("$baseUrl/api/produk/available?gudang_id=$gudangId");
 
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data["data"] ?? [];
-      } else {
-        throw Exception("Failed to load available produk");
-      }
-    } catch (e) {
-      print("ERROR API GET AVAILABLE PRODUK: $e");
-      rethrow;
-    }
-  }
 
   // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
@@ -462,8 +440,6 @@ class ApiService {
   return response.statusCode == 200;
 }
 
-// GET INVENTORY BY WAREHOUSE — FIXED
-
  Future<List<dynamic>> getAllInventory() async {
   final url = Uri.parse("$baseUrl/api/inventory/all");
 
@@ -491,4 +467,54 @@ class ApiService {
   }
 }
 
+
+Future<bool> addQualityControl(Map<String, dynamic> payload) async {
+    final url = Uri.parse("$baseUrl/api/quality-control/add");
+
+    try {
+      print('🔍 Sending to: $url');
+      print('🔍 Payload: $payload');
+      
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      );
+
+      print('🔍 Response status: ${response.statusCode}');
+      print('🔍 Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        print('❌ Error: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getQualityControl({required int gudangId}) async {
+ final url = Uri.parse("$baseUrl/api/quality-control?gudang_asal=$gudangId");
+
+  try {
+    print("🔍 Fetching QC from: $url");
+
+    final response = await http.get(url);
+
+    print("🔍 Response: ${response.statusCode}");
+    print("🔍 Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['data'];
+    } else {
+      return [];
+    }
+  } catch (e) {
+    print("❌ Error QC GET: $e");
+    return [];
+  }
+}
 }

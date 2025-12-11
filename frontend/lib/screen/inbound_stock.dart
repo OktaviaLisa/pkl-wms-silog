@@ -66,7 +66,7 @@ class _InboundPageState extends State<InboundPage> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(child: Text("Tidak ada data inbound"));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {

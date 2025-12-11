@@ -114,8 +114,6 @@ class _InputInboundPageState extends State<InputInboundPage> {
     await api.createProduk(
       kodeProduk: kodeProdukController.text.trim(),
       namaProduk: namaProdukController.text.trim(),
-      volumeProduk: int.tryParse(volumeProdukController.text.trim()) ?? 0,
-      idSatuan: selectedSatuanId!,
     );
   }
 
@@ -174,6 +172,12 @@ class _InputInboundPageState extends State<InputInboundPage> {
         setState(() {
           gudangAsalList =
               allGudang.where((g) => g['id_gudang'] != roleGudang).toList();
+          
+          // Debug: print struktur data gudang
+          if (gudangAsalList.isNotEmpty) {
+            print('📍 Data gudang asal:');
+            print(gudangAsalList.first);
+          }
 
           gudangTujuanController.text =
               gudangTujuan != null ? gudangTujuan['nama_gudang'] : "Gudang $roleGudang";
@@ -376,6 +380,15 @@ class _InputInboundPageState extends State<InputInboundPage> {
                         selectedAlamatGudangAsal = null;
                         alamatGudangAsalController.text = '';
                         isManualAlamat = false;
+                        
+                        // Debug: print gudang yang dipilih
+                        if (value != null) {
+                          final selectedGudangData = gudangAsalList.firstWhere(
+                            (g) => g['nama_gudang'] == value,
+                            orElse: () => null,
+                          );
+                          print('📍 Gudang yang dipilih: $selectedGudangData');
+                        }
                       });
                     },
                   ),
@@ -423,9 +436,10 @@ class _InputInboundPageState extends State<InputInboundPage> {
                         ? gudangAsalList
                             .where((g) => g['nama_gudang'] == selectedGudangAsal)
                             .map<DropdownMenuItem<String>>((g) {
+                              String alamat = g['alamat'] ?? 'Alamat belum diisi';
                               return DropdownMenuItem<String>(
-                                value: g['alamat'],
-                                child: Text(g['alamat'] ?? 'Alamat tidak tersedia'),
+                                value: alamat,
+                                child: Text(alamat),
                               );
                             }).toList()
                         : [],

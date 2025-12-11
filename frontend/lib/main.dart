@@ -8,6 +8,7 @@ import 'screen/inventory.dart';
 import 'screen/inbound_stock.dart';
 import 'screen/outbound.dart';
 import 'screen/add_outbound.dart';
+import 'screen/quality_control.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         '/inbound_stock': (context) => const InboundPage(),
         '/outbound_stock': (context) => OutboundPage(),
         '/addOutbound': (context) => AddOutboundPage(),
+        '/quality-control': (context) => const QualityControlPage(),
       },
     );
   }

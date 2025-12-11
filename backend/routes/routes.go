@@ -28,6 +28,6 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.GET("/api/inventory/all", h.WMS.GetAllInventory)
 	r.PUT("/api/user/update", h.WMS.UpdateUser)
 	r.DELETE("/api/user/delete/:idUser", h.WMS.DeleteUser)
-
-
+	r.POST("/api/quality-control/add", h.WMS.AddQualityControl)
+	r.GET("/api/quality-control", h.WMS.GetQualityControl)
 }

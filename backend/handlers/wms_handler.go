@@ -795,39 +795,114 @@ func (h *WMSHandler) UpdateOrderStatus(c *gin.Context) {
 
 // GET ALL INVENTORY (admin inventory)
 func (h *WMSHandler) GetAllInventory(c *gin.Context) {
-    var inventory []models.Inventory
+	var inventory []models.Inventory
 
-    result := h.db.
-        Preload("Produk").
-        Preload("Produk.Satuan").
-        Preload("Gudang").
-        Find(&inventory)
+	result := h.db.
+		Preload("Produk").
+		Preload("Produk.Satuan").
+		Preload("Gudang").
+		Find(&inventory)
 
-    if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-        return
-    }
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
 
-    var response []map[string]interface{}
-    for _, item := range inventory {
-        jenisSatuan := item.Produk.Satuan.JenisSatuan
-        if jenisSatuan == "" {
-            jenisSatuan = "N/A"
-        }
-        
-        response = append(response, map[string]interface{}{
-            "id_inventory": item.IdInventory,
-            "nama_produk":  item.Produk.NamaProduk,
-            "kode_produk":  item.Produk.KodeProduk,
-            "volume":       item.Volume,
-            "jenis_satuan": jenisSatuan,
-            "gudang":       item.Gudang.NamaGudang,
-            "id_gudang":    item.IdGudang,
-        })
-    }
+	var response []map[string]interface{}
+	for _, item := range inventory {
+		jenisSatuan := item.Produk.Satuan.JenisSatuan
+		if jenisSatuan == "" {
+			jenisSatuan = "N/A"
+		}
 
-    c.JSON(http.StatusOK, gin.H{
-        "message": "All Inventory retrieved successfully",
-        "data":    response,
-    })
+		response = append(response, map[string]interface{}{
+			"id_inventory": item.IdInventory,
+			"nama_produk":  item.Produk.NamaProduk,
+			"kode_produk":  item.Produk.KodeProduk,
+			"volume":       item.Volume,
+			"jenis_satuan": jenisSatuan,
+			"gudang":       item.Gudang.NamaGudang,
+			"id_gudang":    item.IdGudang,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "All Inventory retrieved successfully",
+		"data":    response,
+	})
+}
+
+func (h *WMSHandler) GetQualityControl(c *gin.Context) {
+	gudangAsal := c.Query("gudang_asal") // optional filter berdasarkan gudang
+	if gudangAsal == "" {
+		c.JSON(400, gin.H{"error": "gudang_asal diperlukan"})
+		return
+	}
+
+	// Struct response sesuai Flutter
+	type QCResponse struct {
+		IdQC       int       `json:"id_qc"`
+		NamaProduk string    `json:"nama_produk"`
+		KodeProduk string    `json:"kode_produk"`
+		Volume     int       `json:"volume"`
+		StatusQC   string    `json:"status_qc"`
+		Catatan    string    `json:"catatan"`
+		TglQC      time.Time `json:"tanggal_qc"`
+	}
+
+	qcs := []QCResponse{}
+
+	// LEFT JOIN agar QC tetap muncul walaupun relasi orders/produk kosong
+	result := h.db.Table("quality_control").
+		Joins("LEFT JOIN orders ON orders.idOrders = quality_control.idOrders").
+		Joins("LEFT JOIN produk ON produk.idProduk = orders.idProduk").
+		Order("quality_control.idQC DESC").
+		Scan(&qcs)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	// Pastikan slice tidak null
+	if qcs == nil {
+		qcs = []QCResponse{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Quality Control retrieved successfully",
+		"data":    qcs,
+	})
+}
+
+func (h *WMSHandler) AddQualityControl(c *gin.Context) {
+	var input struct {
+		IdOrders int    `json:"idOrders" binding:"required"`
+		Catatan  string `json:"catatan"`
+		StatusQC string `json:"status_qc" binding:"required"`
+	}
+
+	// Bind JSON input
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Buat record QC baru
+	newQC := models.QualityControl{
+		IdOrders: input.IdOrders,
+		Catatan:  input.Catatan,
+		StatusQC: input.StatusQC,
+		TglQC:    time.Now(), // otomatis set tanggal QC saat ini
+	}
+
+	if err := h.db.Create(&newQC).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambahkan Quality Control"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Quality Control berhasil ditambahkan",
+		"data":    newQC,
+	})
 }
