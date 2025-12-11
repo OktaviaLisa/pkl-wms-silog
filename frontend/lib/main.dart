@@ -9,6 +9,7 @@ import 'screen/inbound_stock.dart';
 import 'screen/outbound.dart';
 import 'screen/add_outbound.dart';
 import 'screen/quality_control.dart';
+import 'screen/detail_inventory.dart';
 
 void main() {
   runApp(const MyApp());

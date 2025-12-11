@@ -107,40 +107,37 @@ class ApiService {
   }
 
   // UPDATE USER (ubah role gudang)
- Future<bool> updateUser({
-  required int idUser,
-  required int roleGudang,
-}) async {
-  final url = Uri.parse('$baseUrl/api/user/update');
+  Future<bool> updateUser({
+    required int idUser,
+    required int roleGudang,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/user/update');
 
-  final response = await http.put(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "idUser": idUser,
-      "role_gudang": roleGudang,
-    }),
-  );
+    final response = await http.put(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"idUser": idUser, "role_gudang": roleGudang}),
+    );
 
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    throw Exception("Gagal update user");
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception("Gagal update user");
+    }
   }
-}
 
   // DELETE USER
   Future<bool> deleteUser(int idUser) async {
-  final url = Uri.parse('$baseUrl/api/user/delete/$idUser');
+    final url = Uri.parse('$baseUrl/api/user/delete/$idUser');
 
-  final response = await http.delete(url);
+    final response = await http.delete(url);
 
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    throw Exception("Gagal hapus user");
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception("Gagal hapus user");
+    }
   }
-}
 
   // GET INBOUND LIST
   Future<List<dynamic>> getInbound({int? userId}) async {
@@ -279,10 +276,7 @@ class ApiService {
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "nama_gudang": namaGudang,
-          "alamat": alamat_gudang,
-        }),
+        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamat_gudang}),
       );
 
       return response.statusCode == 200 || response.statusCode == 201;
@@ -291,7 +285,6 @@ class ApiService {
       rethrow;
     }
   }
-  
 
   // OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
@@ -395,12 +388,11 @@ class ApiService {
     }
   }
 
-
-
   // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
     final url = Uri.parse(
-        "$baseUrl/api/inventory/by-warehouse?id_gudang=$idGudang");
+      "$baseUrl/api/inventory/by-warehouse?id_gudang=$idGudang",
+    );
 
     try {
       final response = await http.get(url);
@@ -423,7 +415,7 @@ class ApiService {
     try {
       print('🔍 Sending to: $url');
       print('🔍 Payload: $payload');
-      
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -442,58 +434,78 @@ class ApiService {
     } catch (e) {
       print('❌ Exception: $e');
       return false;
+    }
+  }
+
+  // GET INVENTORY DETAIL
+  Future<Map<String, dynamic>> getInventoryDetail({
+    required int inventoryId,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/inventory/detail/$inventoryId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"];
+      } else {
+        throw Exception("Failed to load inventory detail");
+      }
+    } catch (e) {
+      print("ERROR API GET INVENTORY DETAIL: $e");
+      rethrow;
     }
   }
 
   // UPDATE INBOUND STATUS → Update status inbound_stock
 
   Future<bool> updateOrderStatus(int idOrder, String status) async {
-  final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
+    final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
 
-  final response = await http.put(
-    url,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({"status": status}),
-  );
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"status": status}),
+    );
 
-  return response.statusCode == 200;
-}
-
- Future<List<dynamic>> getAllInventory() async {
-  final url = Uri.parse("$baseUrl/api/inventory/all");
-
-  try {
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      return (data["data"] as List).map((item) {
-        return {
-          "gudang": item["gudang"] ?? "",
-          "nama_produk": item["nama_produk"] ?? "",
-          "volume": item["volume"] ?? 0,
-          "jenis_satuan": item["jenis_satuan"] ?? "",
-          "kode_produk": item["kode_produk"] ?? "",
-        };
-      }).toList();
-    } else {
-      throw Exception("Failed to load all inventory");
-    }
-  } catch (e) {
-    print("ERROR API GET ALL INVENTORY: $e");
-    rethrow;
+    return response.statusCode == 200;
   }
-}
 
+  Future<List<dynamic>> getAllInventory() async {
+    final url = Uri.parse("$baseUrl/api/inventory/all");
 
-Future<bool> addQualityControl(Map<String, dynamic> payload) async {
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return (data["data"] as List).map((item) {
+          return {
+            "gudang": item["gudang"] ?? "",
+            "nama_produk": item["nama_produk"] ?? "",
+            "volume": item["volume"] ?? 0,
+            "jenis_satuan": item["jenis_satuan"] ?? "",
+            "kode_produk": item["kode_produk"] ?? "",
+          };
+        }).toList();
+      } else {
+        throw Exception("Failed to load all inventory");
+      }
+    } catch (e) {
+      print("ERROR API GET ALL INVENTORY: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> addQualityControl(Map<String, dynamic> payload) async {
     final url = Uri.parse("$baseUrl/api/quality-control/add");
 
     try {
       print('🔍 Sending to: $url');
       print('🔍 Payload: $payload');
-      
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -514,5 +526,4 @@ Future<bool> addQualityControl(Map<String, dynamic> payload) async {
       return false;
     }
   }
-
 }

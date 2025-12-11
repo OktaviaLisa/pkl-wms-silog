@@ -130,49 +130,49 @@ func (h *WMSHandler) CreateUser(c *gin.Context) {
 }
 
 func (w *WMSHandler) UpdateUser(c *gin.Context) {
-    var req struct {
-        IdUser     int `json:"idUser"`
-        RoleGudang int `json:"role_gudang"`
-    }
+	var req struct {
+		IdUser     int `json:"idUser"`
+		RoleGudang int `json:"role_gudang"`
+	}
 
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": err.Error()})
-        return
-    }
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-    // GORM EXEC → result hanya 1 value
-    res := w.db.Exec("UPDATE users SET role_gudang = ? WHERE idUser = ?", req.RoleGudang, req.IdUser)
+	// GORM EXEC → result hanya 1 value
+	res := w.db.Exec("UPDATE users SET role_gudang = ? WHERE idUser = ?", req.RoleGudang, req.IdUser)
 
-    if res.Error != nil {
-        c.JSON(500, gin.H{"error": res.Error.Error()})
-        return
-    }
+	if res.Error != nil {
+		c.JSON(500, gin.H{"error": res.Error.Error()})
+		return
+	}
 
-    if res.RowsAffected == 0 {
-        c.JSON(404, gin.H{"error": "User tidak ditemukan"})
-        return
-    }
+	if res.RowsAffected == 0 {
+		c.JSON(404, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
 
-    c.JSON(200, gin.H{"message": "User updated"})
+	c.JSON(200, gin.H{"message": "User updated"})
 }
 
 func (w *WMSHandler) DeleteUser(c *gin.Context) {
-    idUser := c.Param("idUser")
+	idUser := c.Param("idUser")
 
-    // GORM EXEC
-    res := w.db.Exec("DELETE FROM users WHERE idUser = ?", idUser)
+	// GORM EXEC
+	res := w.db.Exec("DELETE FROM users WHERE idUser = ?", idUser)
 
-    if res.Error != nil {
-        c.JSON(500, gin.H{"error": res.Error.Error()})
-        return
-    }
+	if res.Error != nil {
+		c.JSON(500, gin.H{"error": res.Error.Error()})
+		return
+	}
 
-    if res.RowsAffected == 0 {
-        c.JSON(404, gin.H{"error": "User tidak ditemukan"})
-        return
-    }
+	if res.RowsAffected == 0 {
+		c.JSON(404, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
 
-    c.JSON(200, gin.H{"message": "User deleted"})
+	c.JSON(200, gin.H{"message": "User deleted"})
 }
 
 func (h *WMSHandler) GetInboundStock(c *gin.Context) {
@@ -761,6 +761,79 @@ func (h *WMSHandler) AddInventory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Stok berhasil ditambahkan",
 		"data":    inventory,
+	})
+}
+
+func (h *WMSHandler) GetInventoryDetail(c *gin.Context) {
+	inventoryID := c.Param("id")
+	if inventoryID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "inventory_id diperlukan"})
+		return
+	}
+
+	var inventory models.Inventory
+	result := h.db.
+		Preload("Produk.Satuan").
+		Preload("Gudang").
+		Where("idInventory = ?", inventoryID).
+		First(&inventory)
+
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Inventory tidak ditemukan"})
+		return
+	}
+
+	// Debug: cek data gudang
+	fmt.Printf("🏢 Gudang data: ID=%d, Nama=%s, Alamat=%s\n",
+		inventory.Gudang.IdGudang, inventory.Gudang.NamaGudang, inventory.Gudang.Alamat)
+
+	// Ambil riwayat transaksi untuk produk ini di gudang ini
+	var orders []models.Orders
+	h.db.
+		Preload("GudangAsal").
+		Preload("GudangTujuan").
+		Where("idProduk = ? AND (gudang_asal = ? OR gudang_tujuan = ?)",
+			inventory.IdProduk, inventory.IdGudang, inventory.IdGudang).
+		Order("tgl DESC").
+		Limit(10).
+		Find(&orders)
+
+	// Format riwayat transaksi
+	var riwayat []map[string]interface{}
+	for _, order := range orders {
+		tipeTransaksi := "inbound"
+		if order.GudangAsalId == inventory.IdGudang {
+			tipeTransaksi = "outbound"
+		}
+
+		riwayat = append(riwayat, map[string]interface{}{
+			"tipe":          tipeTransaksi,
+			"volume":        order.Volume,
+			"tanggal":       order.TanggalMasuk.Format("02-01-2006"),
+			"deskripsi":     order.Deskripsi,
+			"gudang_asal":   order.GudangAsal.NamaGudang,
+			"gudang_tujuan": order.GudangTujuan.NamaGudang,
+		})
+	}
+
+	response := map[string]interface{}{
+		"id_inventory":  inventory.IdInventory,
+		"idProduk":      inventory.IdProduk,
+		"nama_produk":   inventory.Produk.NamaProduk,
+		"kode_produk":   inventory.Produk.KodeProduk,
+		"volume":        inventory.Volume,
+		"jenis_satuan":  inventory.Produk.Satuan.JenisSatuan,
+		"nama_gudang":   inventory.Gudang.NamaGudang,
+		"alamat_gudang": inventory.Gudang.Alamat,
+		"riwayat":       riwayat,
+	}
+
+	// Debug: cek response yang dikirim
+	fmt.Printf("📦 Response detail: %+v\n", response)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Inventory detail retrieved successfully",
+		"data":    response,
 	})
 }
 
