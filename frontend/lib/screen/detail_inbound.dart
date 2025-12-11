@@ -50,6 +50,7 @@ class DetailInboundPage extends StatelessWidget {
                     _infoRow("Gudang Asal", data['nama_gudang_asal']),
                     _infoRow("Gudang Tujuan", data['nama_gudang_tujuan']),
                     _infoRow("Tanggal Masuk", data['tanggal_masuk']),
+                    _statusRow(),
                     const SizedBox(height: 12),
 
                     const Text(
@@ -68,12 +69,12 @@ class DetailInboundPage extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE53935), // 🔴 Merah
+                          backgroundColor: _isInventoryDisabled() ? Colors.grey : const Color(0xFFE53935),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                         ),
-                        onPressed: () async {
+                        onPressed: _isInventoryDisabled() ? null : () async {
                           showDialog(
                             context: context,
                             builder: (context) {
@@ -148,12 +149,12 @@ class DetailInboundPage extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFB8C00), // 🟧 Orange
+                            backgroundColor: _isQCDisabled() ? Colors.grey : const Color(0xFFFB8C00),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30)),
                           ),
-                          onPressed: () {
+                          onPressed: _isQCDisabled() ? null : () {
                             showDialog(
                               context: context,
                               builder: (context) {
@@ -224,6 +225,68 @@ class DetailInboundPage extends StatelessWidget {
         ),
       ),
     ),
+    );
+  }
+
+  // Fungsi untuk cek apakah button Inventory harus disabled
+  bool _isInventoryDisabled() {
+    String status = data['status'] ?? 'pending';
+    return status == 'qc' || status == 'processed';
+  }
+
+  // Fungsi untuk cek apakah button QC harus disabled  
+  bool _isQCDisabled() {
+    String status = data['status'] ?? 'pending';
+    return status == 'processed' || status == 'qc';
+  }
+
+  // Widget untuk menampilkan status
+  Widget _statusRow() {
+    String status = data['status'] ?? 'pending';
+    Color statusColor;
+    String statusText;
+    
+    switch (status) {
+      case 'qc':
+        statusColor = Colors.orange;
+        statusText = 'Quality Control';
+        break;
+      case 'processed':
+        statusColor = Colors.green;
+        statusText = 'Sudah di Inventory';
+        break;
+      default:
+        statusColor = Colors.blue;
+        statusText = 'Menunggu Proses';
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+              width: 130,
+              child: Text(
+                "Status:",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              )),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: statusColor),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 

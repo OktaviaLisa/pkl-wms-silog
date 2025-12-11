@@ -376,6 +376,25 @@ class ApiService {
     }
   }
 
+  // GET QUALITY CONTROL BY GUDANG ID
+  Future<List<dynamic>> getQualityControl({required int gudangId}) async {
+    final url = Uri.parse("$baseUrl/api/quality-control?gudang_asal=$gudangId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load quality control");
+      }
+    } catch (e) {
+      print("ERROR API GET QUALITY CONTROL: $e");
+      rethrow;
+    }
+  }
+
 
 
   // GET INVENTORY BY WAREHOUSE — FIXED
@@ -496,25 +515,4 @@ Future<bool> addQualityControl(Map<String, dynamic> payload) async {
     }
   }
 
-  Future<List<dynamic>> getQualityControl({required int gudangId}) async {
- final url = Uri.parse("$baseUrl/api/quality-control?gudang_asal=$gudangId");
-
-  try {
-    print("🔍 Fetching QC from: $url");
-
-    final response = await http.get(url);
-
-    print("🔍 Response: ${response.statusCode}");
-    print("🔍 Body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body)['data'];
-    } else {
-      return [];
-    }
-  } catch (e) {
-    print("❌ Error QC GET: $e");
-    return [];
-  }
-}
 }

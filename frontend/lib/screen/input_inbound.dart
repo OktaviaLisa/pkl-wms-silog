@@ -65,19 +65,27 @@ class _InputInboundPageState extends State<InputInboundPage> {
     int? roleGudang = prefs.getInt("role_gudang");
 
     if (roleGudang != null) {
-      // Ambil inventory
+      // Ambil inventory dan quality control
       final inventory = await api.getInventory(gudangId: roleGudang);
+      final qualityControl = await api.getQualityControl(gudangId: roleGudang);
 
       // Ambil KODE PRODUK yang sudah ada di inventory
-      final existingProductCodes =
-          inventory.map((inv) => inv['kode_produk']).toSet();
+      final inventoryProductCodes = inventory.map((inv) => inv['kode_produk']).toSet();
+      
+      // Ambil KODE PRODUK yang sudah ada di quality control
+      final qcProductCodes = qualityControl.map((qc) => qc['kode_produk']).toSet();
+      
+      // Gabungkan kedua set
+      final excludedProductCodes = {...inventoryProductCodes, ...qcProductCodes};
 
-      print("Produk di inventory: $existingProductCodes");
+      print("Produk di inventory: $inventoryProductCodes");
+      print("Produk di QC: $qcProductCodes");
+      print("Total produk yang dikecualikan: $excludedProductCodes");
 
-      // Filter produk yang BELUM ADA di inventory
+      // Filter produk yang BELUM ADA di inventory dan QC
       setState(() {
         produkList = allProducts
-            .where((p) => !existingProductCodes.contains(p['kode_produk']))
+            .where((p) => !excludedProductCodes.contains(p['kode_produk']))
             .toList();
       });
     } else {

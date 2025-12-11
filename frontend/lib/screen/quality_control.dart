@@ -75,6 +75,12 @@ class _QualityControlPageState extends State<QualityControlPage> {
     }
   }
 
+  String formatTanggal(String tanggal) {
+  if (tanggal.isEmpty || tanggal.length < 10) return tanggal;
+  return tanggal.substring(0, 10);
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,13 +115,10 @@ class _QualityControlPageState extends State<QualityControlPage> {
                 elevation: 2,
                 child: ListTile(
                   leading: Icon(
-                    item.statusQc == "pass"
-                        ? Icons.check_circle
-                        : Icons.cancel,
-                    color: item.statusQc == "pass"
-                        ? Colors.green
-                        : Colors.red,
-                  ),
+                  Icons.verified,
+                  color: const Color(0xFF960B07), // warna merah seperti homepage
+                  size: 32,
+                ),
                   title: Text(
                     item.namaProduk,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -127,7 +130,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
                       Text("Volume : ${item.volume}"),
                       Text("QC : ${item.statusQc.toUpperCase()}"),
                       Text("Catatan : ${item.catatan}"),
-                      Text("Tanggal QC : ${item.tanggalQc}"),
+                      Text("Tanggal QC : ${formatTanggal(item.tanggalQc)}"),
                     ],
                   ),
                   isThreeLine: true,
