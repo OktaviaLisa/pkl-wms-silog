@@ -26,8 +26,6 @@ class _InboundPageState extends State<InboundPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUserId = prefs.getInt('user_id');
 
-    print('🔍 Loading inbound data untuk user ID: $currentUserId');
-
     if (currentUserId != null) {
       setState(() {
         futureInbound = api.getInbound(userId: currentUserId);
@@ -168,11 +166,16 @@ class _InboundPageState extends State<InboundPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF960B07),
         child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const InputInboundPage()),
           );
+          
+          // Jika berhasil simpan inbound, refresh data
+          if (result == true) {
+            _loadUserData();
+          }
         },
       ),
     );

@@ -102,9 +102,6 @@ class DetailInboundPage extends StatelessWidget {
                                         "volume": data['volume'] ?? 1,
                                       };
 
-                                      print('🔍 Payload: $payload');
-                                      print('🔍 IdOrders: ${data['idOrders']}');
-
                                       final api = ApiService();
                                       bool addSuccess = await api.addInventory(payload);
 

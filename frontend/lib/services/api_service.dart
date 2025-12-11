@@ -466,9 +466,6 @@ Future<bool> deleteGudang(int idGudang) async {
         body: jsonEncode(payload),
       );
 
-      print('🔍 Response status: ${response.statusCode}');
-      print('🔍 Response body: ${response.body}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
@@ -517,9 +514,6 @@ Future<bool> deleteGudang(int idGudang) async {
         body: jsonEncode({"status": status}),
       );
 
-      print('🔍 Response status: ${response.statusCode}');
-      print('🔍 Response body: ${response.body}');
-
       return response.statusCode == 200;
     } catch (e) {
       print('❌ Error updating order status: $e');
@@ -566,9 +560,6 @@ Future<bool> deleteGudang(int idGudang) async {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
       );
-
-      print('🔍 Response status: ${response.statusCode}');
-      print('🔍 Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;

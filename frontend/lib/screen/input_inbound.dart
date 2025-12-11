@@ -18,6 +18,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   final TextEditingController alamatGudangAsalController = TextEditingController();
   final TextEditingController gudangTujuanController = TextEditingController();
   final TextEditingController deskripsiController = TextEditingController();
+  final TextEditingController satuanController = TextEditingController();
   
   DateTime? tanggalMasuk;
   bool isLoading = false;
@@ -28,11 +29,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   int? userRoleGudang;
   bool isManualGudang = false;
   bool isManualAlamat = false;
-   bool isManualProduk= false;
-
-  // Tambahan untuk SATUAN
-  List<dynamic> satuanList = [];
-  int? selectedSatuanId;
+  bool isManualProduk = false;
 
   List<dynamic> produkList = [];
   int? selectedProdukId;
@@ -41,20 +38,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   void initState() {
     super.initState();
     _loadUserGudang();
-    _loadSatuan();   // ← Tambahan
     _loadProduk();
-  }
-
-  // Ambil satuan dari backend
-  Future<void> _loadSatuan() async {
-    try {
-      final data = await api.getSatuan(); // Pastikan API ada
-      setState(() {
-        satuanList = data;
-      });
-    } catch (e) {
-      print("Gagal load satuan: $e");
-    }
   }
 
   Future<void> _loadProduk() async {
@@ -103,7 +87,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
     if (kodeProdukController.text.isEmpty ||
         namaProdukController.text.isEmpty ||
         volumeProdukController.text.isEmpty ||
-        selectedSatuanId == null || // ← Tambahan validasi
+        satuanController.text.isEmpty ||
         gudangAsalController.text.isEmpty ||
         alamatGudangAsalController.text.isEmpty ||
         gudangTujuanController.text.isEmpty ||
@@ -113,6 +97,37 @@ class _InputInboundPageState extends State<InputInboundPage> {
       );
       return;
     }
+
+    // Show confirmation dialog
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Simpan'),
+        content: Text(
+          'Apakah Anda yakin ingin menambahkan inbound ini?\n\n'
+          'Produk: ${namaProdukController.text}\n'
+          'Volume: ${volumeProdukController.text} ${satuanController.text}\n'
+          'Dari: ${gudangAsalController.text}\n'
+          'Ke: ${gudangTujuanController.text}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF960B07),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
 
     setState(() => isLoading = true);
 
@@ -150,7 +165,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
         const SnackBar(content: Text('Inbound berhasil disimpan!')),
       );
 
-      Navigator.pop(context); // kembali ke halaman sebelumnya
+      Navigator.pop(context, true); // kirim signal refresh ke halaman sebelumnya
       }
 
       } catch (e) {
@@ -230,7 +245,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
                 selectedProdukId = null;
                 kodeProdukController.clear();
                 namaProdukController.clear();
-                selectedSatuanId = null;
+                satuanController.clear();
               }
             });
           },
@@ -269,6 +284,8 @@ class _InputInboundPageState extends State<InputInboundPage> {
                 selectedProdukId = value;
                 kodeProdukController.text = selected['kode_produk'];
                 namaProdukController.text = selected['nama_produk'];
+                // Auto-fill satuan berdasarkan produk yang dipilih
+                satuanController.text = selected['jenis_satuan'] ?? 'Belum ada satuan';
               });
             },
           ),
@@ -308,26 +325,19 @@ class _InputInboundPageState extends State<InputInboundPage> {
             ),
             const SizedBox(height: 20),
 
-            // 🔥 DROPDOWN SATUAN BARU DI SINI
+            // SATUAN AUTO-FILL
             const Text('Satuan Produk *'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              value: selectedSatuanId,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Pilih satuan",
+            TextField(
+              controller: satuanController,
+              readOnly: !isManualProduk,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                filled: !isManualProduk,
+                fillColor: !isManualProduk ? Colors.grey[200] : Colors.white,
+                hintText: isManualProduk ? 'Masukkan satuan (kg, pcs, liter, dll)' : 'Otomatis dari produk yang dipilih',
+                suffixIcon: const Icon(Icons.scale, color: Colors.grey),
               ),
-              items: satuanList.map<DropdownMenuItem<int>>((satuan) {
-                return DropdownMenuItem<int>(
-                  value: satuan['id_satuan'],
-                  child: Text(satuan['jenis_satuan']),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedSatuanId = value;
-                });
-              },
             ),
 
             const SizedBox(height: 25),
@@ -395,7 +405,6 @@ class _InputInboundPageState extends State<InputInboundPage> {
                             (g) => g['nama_gudang'] == value,
                             orElse: () => null,
                           );
-                          print('📍 Gudang yang dipilih: $selectedGudangData');
                         }
                       });
                     },
@@ -569,6 +578,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
     alamatGudangAsalController.dispose();
     gudangTujuanController.dispose();
     deskripsiController.dispose();
+    satuanController.dispose();
     super.dispose();
   }
 }

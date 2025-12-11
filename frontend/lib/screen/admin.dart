@@ -41,6 +41,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+         leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         backgroundColor: const Color(0xFF7B1E1E),
         elevation: 2,
         title: const Text(
@@ -88,7 +92,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                     
                     _sidebarItem(
-                    Icons.inventory,
+                    Icons.door_front_door,
                     'Gudang',
                     onTap: () {
                       Navigator.push(

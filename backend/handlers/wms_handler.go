@@ -270,9 +270,21 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetProduk(c *gin.Context) {
-	var produk []models.Produk
+	type ProdukWithSatuan struct {
+		IdProduk    int    `json:"id_produk"`
+		KodeProduk  string `json:"kode_produk"`
+		NamaProduk  string `json:"nama_produk"`
+		IdSatuan    int    `json:"id_satuan"`
+		JenisSatuan string `json:"jenis_satuan"`
+	}
 
-	result := h.db.Find(&produk)
+	var produkList []ProdukWithSatuan
+
+	// JOIN manual untuk memastikan data satuan ter-load
+	result := h.db.Table("produk").
+		Select("produk.idProduk as id_produk, produk.kode_produk, produk.nama_produk, produk.idSatuan as id_satuan, COALESCE(satuan.jenis_satuan, 'Belum ada satuan') as jenis_satuan").
+		Joins("LEFT JOIN satuan ON satuan.idSatuan = produk.idSatuan").
+		Scan(&produkList)
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -281,7 +293,7 @@ func (h *WMSHandler) GetProduk(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Produk retrieved successfully",
-		"data":    produk,
+		"data":    produkList,
 	})
 }
 

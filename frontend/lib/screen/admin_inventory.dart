@@ -135,6 +135,10 @@ class _AdminInventoryPageState extends State<AdminInventoryPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
+         leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         backgroundColor: const Color(0xFF7B1E1E),
         title: const Text(
           "Inventory",
