@@ -31,4 +31,6 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.DELETE("/api/user/delete/:idUser", h.WMS.DeleteUser)
 	r.POST("/api/quality-control/add", h.WMS.AddQualityControl)
 	r.GET("/api/quality-control", h.WMS.GetQualityControl)
+	r.POST("/api/quality-control/process", h.WMS.ProcessQC)
+	r.GET("/api/return", h.WMS.GetReturn)
 }

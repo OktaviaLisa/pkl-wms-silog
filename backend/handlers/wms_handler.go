@@ -1020,3 +1020,136 @@ func (h *WMSHandler) AddQualityControl(c *gin.Context) {
 		"data":    newQC,
 	})
 }
+
+func (h *WMSHandler) ProcessQC(c *gin.Context) {
+	var input struct {
+		IdQC      int    `json:"id_qc" binding:"required"`
+		QtyGood   int    `json:"qty_good"`
+		QtyBad    int    `json:"qty_bad"`
+		CatatanQC string `json:"catatan_qc"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var qc models.QualityControl
+	if err := tx.Preload("Orders").Where("idQC = ?", input.IdQC).First(&qc).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "QC tidak ditemukan"})
+		return
+	}
+
+	if input.QtyGood+input.QtyBad != qc.Orders.Volume {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Total qty good + bad harus sama dengan volume"})
+		return
+	}
+
+	if input.QtyGood > 0 {
+		var inventory models.Inventory
+		err := tx.Where("idProduk = ? AND idGudang = ?", qc.Orders.IdProduk, qc.IdGudang).First(&inventory).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			newInventory := models.Inventory{
+				IdProduk: qc.Orders.IdProduk,
+				IdGudang: qc.IdGudang,
+				Volume:   input.QtyGood,
+			}
+			if err := tx.Create(&newInventory).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambah inventory"})
+				return
+			}
+		} else {
+			inventory.Volume += input.QtyGood
+			if err := tx.Save(&inventory).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update inventory"})
+				return
+			}
+		}
+	}
+
+	if input.QtyBad > 0 {
+		returnItem := models.Return{
+			IdQC:      qc.IdQC,
+			IdGudang:  qc.IdGudang,
+			Volume:    input.QtyBad,
+			Alasan:    input.CatatanQC,
+			TglReturn: time.Now(),
+		}
+		if err := tx.Create(&returnItem).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambah return"})
+			return
+		}
+	}
+
+	qc.StatusQC = "done"
+	if err := tx.Save(&qc).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal update QC"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "QC berhasil diproses"})
+}
+
+func (h *WMSHandler) GetReturn(c *gin.Context) {
+	gudangID := c.Query("gudang_id")
+	if gudangID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
+		return
+	}
+
+	fmt.Printf("🔍 GetReturn dipanggil dengan gudang_id: %s\n", gudangID)
+
+	type ReturnResponse struct {
+		IdReturn   int       `json:"id_return"`
+		NamaProduk string    `json:"nama_produk"`
+		KodeProduk string    `json:"kode_produk"`
+		Volume     int       `json:"volume"`
+		Alasan     string    `json:"alasan"`
+		TglReturn  time.Time `json:"tgl_return"`
+	}
+
+	returns := []ReturnResponse{}
+
+	result := h.db.Table("return").
+		Select("return.idReturn as id_return, produk.nama_produk, produk.kode_produk, return.volume, return.alasan, return.tgl_return").
+		Joins("LEFT JOIN quality_control ON quality_control.idQC = return.idQC").
+		Joins("LEFT JOIN orders ON orders.idOrders = quality_control.idOrders").
+		Joins("LEFT JOIN produk ON produk.idProduk = orders.idProduk").
+		Where("return.idGudang = ?", gudangID).
+		Order("return.idReturn DESC").
+		Scan(&returns)
+
+	fmt.Printf("📦 Query result: %d returns found for gudang %s\n", len(returns), gudangID)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if returns == nil {
+		returns = []ReturnResponse{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Return retrieved successfully",
+		"data":    returns,
+	})
+}

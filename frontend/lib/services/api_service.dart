@@ -539,4 +539,44 @@ class ApiService {
       return false;
     }
   }
+
+  Future<bool> processQC(Map<String, dynamic> payload) async {
+    final url = Uri.parse("$baseUrl/api/quality-control/process");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Gagal proses QC");
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>> getReturn({required int gudangId}) async {
+    final url = Uri.parse("$baseUrl/api/return?gudang_id=$gudangId");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        throw Exception("Failed to load return data");
+      }
+    } catch (e) {
+      print("ERROR API GET RETURN: $e");
+      rethrow;
+    }
+  }
 }
