@@ -5,7 +5,7 @@ import "backend/config"
 type Inventory struct {
 	IdInventory int `gorm:"column:idInventory;primaryKey" json:"id_inventory"`
 	IdProduk    int `gorm:"column:idProduk" json:"id_produk"`
-	IdGudang    int `gorm:"column:idGudang" json:"id_gudang"`
+	IdGudang    int `gorm:"column:idGudang" json:"idGudang"`
 	Volume      int `gorm:"column:volume" json:"volume"`
 
 	Produk Produk `gorm:"foreignKey:IdProduk;references:IdProduk" json:"produk"`

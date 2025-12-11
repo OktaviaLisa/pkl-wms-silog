@@ -18,6 +18,8 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.POST("/api/produk/create", h.WMS.CreateProduk)
 	r.GET("/api/gudang/list", h.WMS.GetGudang)
 	r.POST("/api/gudang/create", h.WMS.CreateGudang)
+	r.PUT("/api/gudang/update/:id", h.WMS.UpdateGudang)
+	r.DELETE("/api/gudang/delete/:id", h.WMS.DeleteGudang)
 	r.GET("/api/gudang/user", h.WMS.GetUserGudang)
 	r.GET("/api/outbound/getOutbound", h.WMS.GetOutbound)
 	r.POST("/api/outbound/postOutbound", h.WMS.CreateOutbound)

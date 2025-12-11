@@ -5,7 +5,7 @@ import "time"
 type Return struct {
 	IdReturn  int       `gorm:"column:idReturn;primaryKey;autoIncrement" json:"id_return"`
 	IdQC      int       `gorm:"column:idQC" json:"id_qc"`
-	IdGudang  int       `gorm:"column:idGudang" json:"id_gudang"`
+	IdGudang  int       `gorm:"column:idGudang" json:"idGudang"`
 	Volume    int       `gorm:"column:volume" json:"volume"`
 	Alasan    string    `gorm:"column:alasan" json:"alasan"`
 	TglReturn time.Time `gorm:"column:tgl_return" json:"tgl_return"`

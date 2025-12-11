@@ -129,7 +129,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
   if (isManualGudang) {
     await api.createGudang(
       namaGudang: gudangAsalController.text.trim(),
-      alamat_gudang: alamatGudangAsalController.text.trim(),
+      alamat: alamatGudangAsalController.text.trim(),
     );
   }
 
@@ -173,13 +173,13 @@ class _InputInboundPageState extends State<InputInboundPage> {
         final allGudang = await api.getGudang();
 
         final gudangTujuan = allGudang.firstWhere(
-          (g) => g['id_gudang'] == roleGudang,
+          (g) => g['idGudang'] == roleGudang,
           orElse: () => null,
         );
 
         setState(() {
           gudangAsalList =
-              allGudang.where((g) => g['id_gudang'] != roleGudang).toList();
+              allGudang.where((g) => g['idGudang'] != roleGudang).toList();
           
           // Debug: print struktur data gudang
           if (gudangAsalList.isNotEmpty) {

@@ -50,11 +50,11 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
       if (currentUserId != null) {
         final api = ApiService();
         final userGudang = await api.getUserGudang(userId: currentUserId!);
-        // handler returns data with keys: 'id_gudang' and 'nama_gudang'
+        // handler returns data with keys: 'idGudang' and 'nama_gudang'
         if (userGudang != null && userGudang is Map) {
-          userRoleGudangId = (userGudang['id_gudang'] is int)
-              ? userGudang['id_gudang']
-              : (int.tryParse(userGudang['id_gudang'].toString()) ?? null);
+          userRoleGudangId = (userGudang['idGudang'] is int)
+              ? userGudang['idGudang']
+              : (int.tryParse(userGudang['idGudang'].toString()) ?? null);
           userGudangName =
               userGudang['nama_gudang']?.toString() ??
               userGudang['namaGudang']?.toString();
@@ -72,7 +72,7 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
       if (gudangAll is List) {
         // keep as dynamic list
         gudangList = gudangAll.where((g) {
-          final id = _extractInt(g, ['id_gudang', 'idGudang', 'id']);
+          final id = _extractInt(g, ['idGudang', 'idGudang', 'id']);
           if (userRoleGudangId != null && id != null) {
             return id != userRoleGudangId;
           }

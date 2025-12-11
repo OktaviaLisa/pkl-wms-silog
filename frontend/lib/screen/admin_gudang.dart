@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class AdminGudangPage extends StatefulWidget {
@@ -19,24 +19,151 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
     fetchGudang();
   }
 
-  Future<void> fetchGudang() async {
-    try {
-      final data = await apiService.getGudang();
-      setState(() {
-        gudangList = data;
+ Future<void> fetchGudang() async {
+  try {
+    final data = await apiService.getGudang();
 
-        gudangList.sort((a, b) =>
-            int.parse(a["id_gudang"].toString())
-                .compareTo(int.parse(b["id_gudang"].toString())));
+    // NORMALISASI DATA → agar idGudang tidak null
+    gudangList = data.map((e) {
+      return {
+        "idGudang": e["idGudang"] ?? e["id_gudang"] ?? 0,
+        "nama_gudang": e["nama_gudang"] ?? "",
+        "alamat": e["alamat"] ?? "",
+      };
+    }).toList();
 
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() => isLoading = false);
-      print("Error fetch gudang: $e");
-    }
+    // SORTING AMAN TANPA NULL
+    gudangList.sort((a, b) {
+      final idA = int.tryParse(a["idGudang"].toString()) ?? 0;
+      final idB = int.tryParse(b["idGudang"].toString()) ?? 0;
+      return idA.compareTo(idB);
+    });
+
+    setState(() => isLoading = false);
+  } catch (e) {
+    print("Error fetch gudang: $e");
+    setState(() => isLoading = false);
+  }
+}
+
+  // =========================================================
+  // *********************** POP UP EDIT **********************
+  // =========================================================
+  void showEditGudangDialog(Map g) {
+    final namaController = TextEditingController(text: g["nama_gudang"]);
+    final alamatController = TextEditingController(text: g["alamat"]);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: 420,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Edit Gudang",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF7B1E1E),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: namaController,
+                  decoration: InputDecoration(
+                    labelText: "Nama Gudang",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: alamatController,
+                  decoration: InputDecoration(
+                    labelText: "Alamat Gudang",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      child: const Text("Batal"),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7B1E1E),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Simpan Perubahan"),
+                      onPressed: () async {
+                        await apiService.updateGudang(
+                          idGudang: g["idGudang"],
+                          namaGudang: namaController.text.trim(),
+                          alamat: alamatController.text.trim(),
+                        );
+
+                        Navigator.pop(context);
+                        fetchGudang();
+                      },
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
+  // =========================================================
+  // ********************** POP UP HAPUS **********************
+  // =========================================================
+  void confirmDelete(Map g) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Konfirmasi Hapus"),
+          content: Text("Yakin ingin menghapus gudang '${g["nama_gudang"]}' ?"),
+          actions: [
+            TextButton(
+              child: const Text("Batal"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text("Hapus"),
+              onPressed: () async {
+                await apiService.deleteGudang(g["idGudang"]);
+                Navigator.pop(context);
+                fetchGudang();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // =========================================================
+  // ******************** TAMBAH GUDANG **********************
+  // =========================================================
   void showCreateGudangDialog() {
     final namaController = TextEditingController();
     final alamatController = TextEditingController();
@@ -97,7 +224,7 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
                       onPressed: () async {
                         await apiService.createGudang(
                           namaGudang: namaController.text.trim(),
-                          alamat_gudang: alamatController.text.trim(),
+                          alamat: alamatController.text.trim(),
                         );
                         Navigator.pop(context);
                         fetchGudang();
@@ -113,6 +240,9 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
     );
   }
 
+  // =========================================================
+  // ********************** UI TABEL *************************
+  // =========================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,61 +254,66 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
         padding: const EdgeInsets.only(top: 40, left: 24, right: 24),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : gudangList.isEmpty
-                ? const Center(child: Text("Belum ada gudang"))
-                : SingleChildScrollView(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor:
-                            MaterialStateProperty.all(const Color(0xFF7B1E1E)),
-                        headingTextStyle: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        dataRowHeight: 55,
-                        headingRowHeight: 60,
-                        columnSpacing: 60,
-
-                        border: TableBorder(
-                          top: BorderSide.none,
-                          bottom: BorderSide.none,
-                          left: BorderSide.none,
-                          right: BorderSide.none,
-                          horizontalInside: BorderSide.none,
-                          verticalInside: BorderSide.none,
-                        ),
-
-                        columns: const [
-                          DataColumn(label: Text("No")),
-                          DataColumn(label: Text("Nama Gudang")),
-                          DataColumn(label: Text("Alamat")),
-                        ],
-                        rows: List.generate(gudangList.length, (index) {
-                          final g = gudangList[index];
-
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                                return index.isEven
-                                    ? const Color(0xFFF3F6FA)
-                                    : Colors.white;
-                              },
-                            ),
-                            cells: [
-                              DataCell(Center(child: Text("${index + 1}"))),
-
-                              // FIX: ambil field yang benar
-                              DataCell(Text(g["nama_gudang"] ?? "-")),
-                              DataCell(Text(g["alamat"] ?? "-")),
-                            ],
-                          );
-                        }),
-                      ),
+            : SingleChildScrollView(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor:
+                        MaterialStateProperty.all(const Color(0xFF7B1E1E)),
+                    headingTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
+                    dataRowHeight: 60,
+                    headingRowHeight: 60,
+                    columnSpacing: 70,
+
+                    columns: const [
+                      DataColumn(label: Text("No")),
+                      DataColumn(label: Text("Nama Gudang")),
+                      DataColumn(label: Text("Alamat")),
+                      DataColumn(label: Text("Aksi")),
+                    ],
+
+                    rows: List.generate(gudangList.length, (index) {
+                      final g = gudangList[index];
+
+                      return DataRow(
+                        color: MaterialStateProperty.resolveWith<Color?>(
+                          (Set<MaterialState> states) {
+                            return index.isEven
+                                ? const Color(0xFFF3F6FA)
+                                : Colors.white;
+                          },
+                        ),
+                        cells: [
+                          DataCell(Text("${index + 1}")),
+                          DataCell(Text(g["nama_gudang"] ?? "-")),
+                          DataCell(Text(g["alamat"] ?? "-")),
+
+                          DataCell(
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Color(0xFF7B1E1E)),
+                                  onPressed: () => showEditGudangDialog(g),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => confirmDelete(g),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ),
+                ),
+              ),
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF7B1E1E),
         onPressed: showCreateGudangDialog,

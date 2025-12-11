@@ -318,7 +318,7 @@ func (h *WMSHandler) GetUserGudang(c *gin.Context) {
 		"message": "User gudang retrieved successfully",
 		"data": gin.H{
 			"nama_gudang": user.Gudang.NamaGudang,
-			"id_gudang":   user.RoleGudang,
+			"idGudang":   user.RoleGudang,
 		},
 	})
 }
@@ -452,6 +452,45 @@ func (h *WMSHandler) CreateGudang(c *gin.Context) {
 		"message": "Gudang berhasil dibuat",
 		"data":    gudang,
 	})
+}
+
+func (h *WMSHandler) UpdateGudang(c *gin.Context) {
+    id := c.Param("id")
+    var gudang models.Gudang
+
+    if err := c.ShouldBindJSON(&gudang); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // UPDATE sesuai nama kolom di database
+    if err := h.db.Model(&models.Gudang{}).
+        Where("idGudang = ?", id).
+        Updates(map[string]interface{}{
+            "nama_gudang": gudang.NamaGudang,
+            "alamat":      gudang.Alamat,
+        }).Error; err != nil {
+
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Gudang updated"})
+}
+
+func (h *WMSHandler) DeleteGudang(c *gin.Context) {
+    id := c.Param("id")
+
+    if err := h.db.Delete(&models.Gudang{}, id).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": "Gagal menghapus gudang: " + err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Gudang berhasil dihapus",
+    })
 }
 
 // OUTBOUND
@@ -867,7 +906,7 @@ func (h *WMSHandler) GetInventoryDetail(c *gin.Context) {
 		"volume":        inventory.Volume,
 		"jenis_satuan":  inventory.Produk.Satuan.JenisSatuan,
 		"nama_gudang":   inventory.Gudang.NamaGudang,
-		"alamat_gudang": inventory.Gudang.Alamat,
+		"alamat": inventory.Gudang.Alamat,
 		"riwayat":       riwayat,
 	}
 
@@ -938,7 +977,7 @@ func (h *WMSHandler) GetAllInventory(c *gin.Context) {
 			"volume":       item.Volume,
 			"jenis_satuan": jenisSatuan,
 			"gudang":       item.Gudang.NamaGudang,
-			"id_gudang":    item.IdGudang,
+			"idGudang":    item.IdGudang,
 		})
 	}
 

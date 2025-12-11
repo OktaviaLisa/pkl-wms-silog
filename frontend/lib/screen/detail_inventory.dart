@@ -132,7 +132,7 @@ class _DetailInventoryPageState extends State<DetailInventoryPage> {
                   ),
                   const Divider(),
                   _buildInfoRow('Nama Gudang', detail['nama_gudang'] ?? '-'),
-                  _buildInfoRow('Alamat', detail['alamat_gudang'] ?? '-'),
+                  _buildInfoRow('Alamat', detail['alamat'] ?? '-'),
                 ],
               ),
             ),

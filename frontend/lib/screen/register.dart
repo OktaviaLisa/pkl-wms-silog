@@ -61,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
   String getGudangName(int? id) {
     if (id == null) return "-";
     final g = gudangList.firstWhere(
-      (item) => item["id_gudang"] == id,
+      (item) => item["idGudang"] == id,
       orElse: () => null,
     );
     return g?["nama_gudang"] ?? "-";
@@ -101,7 +101,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   value: selectedGudangEdit,
                   items: gudangList.map<DropdownMenuItem<int>>((g) {
                     return DropdownMenuItem(
-                      value: g["id_gudang"],
+                      value: g["idGudang"],
                       child: Text(g["nama_gudang"]),
                     );
                   }).toList(),
@@ -255,7 +255,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       value: selectedGudang,
                       items: gudangList.map<DropdownMenuItem<int>>((g) {
                         return DropdownMenuItem(
-                          value: g["id_gudang"],
+                          value: g["idGudang"],
                           child: Text(g["nama_gudang"]),
                         );
                       }).toList(),

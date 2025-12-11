@@ -43,7 +43,7 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   final ApiService api = ApiService();
   int? currentUserId;
-  int? currentGudangId; // untuk menampung id_gudang user
+  int? currentGudangId; // untuk menampung idGudang user
   late Future<List<Inventory>> futureInventory;
 
   @override

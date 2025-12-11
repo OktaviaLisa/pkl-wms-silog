@@ -267,26 +267,68 @@ class ApiService {
 
   // CREATE GUDANG
   Future<bool> createGudang({
-    required String namaGudang,
-    required String alamat_gudang,
-  }) async {
-    final url = Uri.parse("$baseUrl/api/gudang/create");
+  required String namaGudang,
+  required String alamat,
+}) async {
+  final url = Uri.parse("$baseUrl/api/gudang/create");
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamat_gudang}),
-      );
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "nama_gudang": namaGudang,
+        "alamat": alamat,
+      }),
+    );
 
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      print("ERROR API CREATE GUDANG: $e");
-      rethrow;
-    }
+    return response.statusCode == 200 || response.statusCode == 201;
+  } catch (e) {
+    print("ERROR API CREATE GUDANG: $e");
+    rethrow;
   }
+}
 
-  // OUTBOUND
+  // UPDATE GUDANG
+  Future<bool> updateGudang({
+  required int idGudang,
+  required String namaGudang,
+  required String alamat,
+}) async {
+  final url = Uri.parse("$baseUrl/api/gudang/update/$idGudang");
+
+  try {
+    final response = await http.put(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "nama_gudang": namaGudang,
+        "alamat": alamat,
+      }),
+    );
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("ERROR API UPDATE GUDANG: $e");
+    rethrow;
+  }
+}
+
+// DELETE GUDANG
+Future<bool> deleteGudang(int idGudang) async {
+  final url = Uri.parse("$baseUrl/api/gudang/delete/$idGudang");
+
+  try {
+    final response = await http.delete(url);
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("ERROR API DELETE GUDANG: $e");
+    rethrow;
+  }
+}
+
+// OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
     String urlString = "$baseUrl/api/outbound/getOutbound";
     if (userId != null) {
@@ -393,7 +435,7 @@ class ApiService {
   // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
     final url = Uri.parse(
-      "$baseUrl/api/inventory/by-warehouse?id_gudang=$idGudang",
+      "$baseUrl/api/inventory/by-warehouse?idGudang=$idGudang",
     );
 
     try {
