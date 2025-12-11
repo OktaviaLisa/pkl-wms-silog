@@ -35,4 +35,5 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	r.GET("/api/quality-control", h.WMS.GetQualityControl)
 	r.POST("/api/quality-control/process", h.WMS.ProcessQC)
 	r.GET("/api/return", h.WMS.GetReturn)
+	r.GET("/api/chart/transactions", h.WMS.GetTransactionChart)
 }

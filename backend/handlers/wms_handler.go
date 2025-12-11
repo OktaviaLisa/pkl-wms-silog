@@ -330,7 +330,7 @@ func (h *WMSHandler) GetUserGudang(c *gin.Context) {
 		"message": "User gudang retrieved successfully",
 		"data": gin.H{
 			"nama_gudang": user.Gudang.NamaGudang,
-			"idGudang":   user.RoleGudang,
+			"idGudang":    user.RoleGudang,
 		},
 	})
 }
@@ -467,42 +467,42 @@ func (h *WMSHandler) CreateGudang(c *gin.Context) {
 }
 
 func (h *WMSHandler) UpdateGudang(c *gin.Context) {
-    id := c.Param("id")
-    var gudang models.Gudang
+	id := c.Param("id")
+	var gudang models.Gudang
 
-    if err := c.ShouldBindJSON(&gudang); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	if err := c.ShouldBindJSON(&gudang); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    // UPDATE sesuai nama kolom di database
-    if err := h.db.Model(&models.Gudang{}).
-        Where("idGudang = ?", id).
-        Updates(map[string]interface{}{
-            "nama_gudang": gudang.NamaGudang,
-            "alamat":      gudang.Alamat,
-        }).Error; err != nil {
+	// UPDATE sesuai nama kolom di database
+	if err := h.db.Model(&models.Gudang{}).
+		Where("idGudang = ?", id).
+		Updates(map[string]interface{}{
+			"nama_gudang": gudang.NamaGudang,
+			"alamat":      gudang.Alamat,
+		}).Error; err != nil {
 
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Gudang updated"})
+	c.JSON(http.StatusOK, gin.H{"message": "Gudang updated"})
 }
 
 func (h *WMSHandler) DeleteGudang(c *gin.Context) {
-    id := c.Param("id")
+	id := c.Param("id")
 
-    if err := h.db.Delete(&models.Gudang{}, id).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Gagal menghapus gudang: " + err.Error(),
-        })
-        return
-    }
+	if err := h.db.Delete(&models.Gudang{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal menghapus gudang: " + err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "message": "Gudang berhasil dihapus",
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Gudang berhasil dihapus",
+	})
 }
 
 // OUTBOUND
@@ -911,15 +911,15 @@ func (h *WMSHandler) GetInventoryDetail(c *gin.Context) {
 	}
 
 	response := map[string]interface{}{
-		"id_inventory":  inventory.IdInventory,
-		"idProduk":      inventory.IdProduk,
-		"nama_produk":   inventory.Produk.NamaProduk,
-		"kode_produk":   inventory.Produk.KodeProduk,
-		"volume":        inventory.Volume,
-		"jenis_satuan":  inventory.Produk.Satuan.JenisSatuan,
-		"nama_gudang":   inventory.Gudang.NamaGudang,
-		"alamat": inventory.Gudang.Alamat,
-		"riwayat":       riwayat,
+		"id_inventory": inventory.IdInventory,
+		"idProduk":     inventory.IdProduk,
+		"nama_produk":  inventory.Produk.NamaProduk,
+		"kode_produk":  inventory.Produk.KodeProduk,
+		"volume":       inventory.Volume,
+		"jenis_satuan": inventory.Produk.Satuan.JenisSatuan,
+		"nama_gudang":  inventory.Gudang.NamaGudang,
+		"alamat":       inventory.Gudang.Alamat,
+		"riwayat":      riwayat,
 	}
 
 	// Debug: cek response yang dikirim
@@ -989,7 +989,7 @@ func (h *WMSHandler) GetAllInventory(c *gin.Context) {
 			"volume":       item.Volume,
 			"jenis_satuan": jenisSatuan,
 			"gudang":       item.Gudang.NamaGudang,
-			"idGudang":    item.IdGudang,
+			"idGudang":     item.IdGudang,
 		})
 	}
 
@@ -1202,5 +1202,64 @@ func (h *WMSHandler) GetReturn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Return retrieved successfully",
 		"data":    returns,
+	})
+}
+
+func (h *WMSHandler) GetTransactionChart(c *gin.Context) {
+	year := c.Query("year")
+	if year == "" {
+		year = fmt.Sprintf("%d", time.Now().Year())
+	}
+
+	type ChartData struct {
+		Bulan    int `json:"bulan"`
+		Inbound  int `json:"inbound"`
+		Outbound int `json:"outbound"`
+	}
+
+	chartData := make([]ChartData, 12)
+	for i := 0; i < 12; i++ {
+		chartData[i] = ChartData{Bulan: i + 1, Inbound: 0, Outbound: 0}
+	}
+
+	// Query Inbound (status != 'outbound' OR status IS NULL)
+	var inboundData []struct {
+		Bulan int `json:"bulan"`
+		Total int `json:"total"`
+	}
+	h.db.Table("orders").
+		Select("MONTH(tgl) as bulan, COUNT(*) as total").
+		Where("YEAR(tgl) = ? AND (status != 'outbound' OR status IS NULL)", year).
+		Group("MONTH(tgl)").
+		Scan(&inboundData)
+
+	// Query Outbound (status = 'outbound')
+	var outboundData []struct {
+		Bulan int `json:"bulan"`
+		Total int `json:"total"`
+	}
+	h.db.Table("orders").
+		Select("MONTH(tgl) as bulan, COUNT(*) as total").
+		Where("YEAR(tgl) = ? AND status = 'outbound'", year).
+		Group("MONTH(tgl)").
+		Scan(&outboundData)
+
+	// Populate data
+	for _, item := range inboundData {
+		if item.Bulan >= 1 && item.Bulan <= 12 {
+			chartData[item.Bulan-1].Inbound = item.Total
+		}
+	}
+
+	for _, item := range outboundData {
+		if item.Bulan >= 1 && item.Bulan <= 12 {
+			chartData[item.Bulan-1].Outbound = item.Total
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Chart data retrieved successfully",
+		"year":    year,
+		"data":    chartData,
 	})
 }

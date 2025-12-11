@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import 'register.dart';
 import 'login.dart';
-import 'admin_inventory.dart'; 
+import 'admin_inventory.dart';
 import 'admin_gudang.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -41,7 +42,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-         leading: IconButton(
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
@@ -49,10 +50,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         elevation: 2,
         title: const Text(
           'Admin Panel',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -75,8 +73,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _sidebarItem(Icons.dashboard, 'Dashboard', onTap: () {}),
 
                   // FITUR MASTER ADMIN //
-
-                    _sidebarItem(
+                  _sidebarItem(
                     Icons.group,
                     'User Management',
                     onTap: () {
@@ -86,13 +83,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           builder: (context) => const RegisterPage(),
                         ),
                       ).then((_) {
-                        fetchTotalUsers(); 
+                        fetchTotalUsers();
                       });
                     },
                   ),
-                    
-                    _sidebarItem(
-                    Icons.door_front_door,
+
+                  _sidebarItem(
+                    Icons.inventory,
                     'Gudang',
                     onTap: () {
                       Navigator.push(
@@ -103,7 +100,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       );
                     },
                   ),
-                  
+
                   _sidebarItem(
                     Icons.inventory,
                     'Inventory',
@@ -160,18 +157,76 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   Row(
                     children: [
-                      _infoCard("Total Users",
-                          isLoading ? "..." : totalUsers.toString()),
-
-                      // → Updated text only
+                      _infoCard(
+                        "Total Users",
+                        isLoading ? "..." : totalUsers.toString(),
+                      ),
                       _infoCard("Total Inventory", "1,204"),
                       _infoCard("Inbound Today", "18"),
                       _infoCard("Outbound Today", "12"),
                     ],
-                  )
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // CHART SECTION
+                  Container(
+                    height: 420, // naikkan sedikit biar chart punya ruang
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      20,
+                      20,
+                      40,
+                    ), // extra padding bawah
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Statistik Transaksi Bulanan",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF7B1E1E),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: FutureBuilder<Map<String, dynamic>>(
+                            future: apiService.getTransactionChart(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (!snapshot.hasData) {
+                                return const Center(
+                                  child: Text("Tidak ada data chart"),
+                                );
+                              }
+
+                              final chartData = snapshot.data!['data'] as List;
+                              return _buildChart(chartData);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -179,7 +234,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // Sidebar Item Widget
-  Widget _sidebarItem(IconData icon, String label, {required Function() onTap}) {
+  Widget _sidebarItem(
+    IconData icon,
+    String label, {
+    required Function() onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -207,10 +266,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-            )
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6),
           ],
           borderRadius: BorderRadius.circular(12),
         ),
@@ -234,5 +290,98 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       ),
     );
+  }
+
+  Widget _buildChart(List<dynamic> data) {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: _getMaxY(data),
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32, // ← tambahin ini
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() >= 0 && value.toInt() < 12) {
+                  return Text(
+                    months[value.toInt()],
+                    style: const TextStyle(fontSize: 12),
+                  );
+                }
+                return const Text('');
+              },
+            ),
+          ),
+
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 12),
+                );
+              },
+            ),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: data.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: (item['inbound'] ?? 0).toDouble(),
+                color: Colors.blue,
+                width: 12,
+              ),
+              BarChartRodData(
+                toY: (item['outbound'] ?? 0).toDouble(),
+                color: Colors.red,
+                width: 12,
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  double _getMaxY(List<dynamic> data) {
+    double max = 0;
+    for (var item in data) {
+      final inbound = (item['inbound'] ?? 0).toDouble();
+      final outbound = (item['outbound'] ?? 0).toDouble();
+      if (inbound > max) max = inbound;
+      if (outbound > max) max = outbound;
+    }
+    return max + 5; // Tambah margin
   }
 }

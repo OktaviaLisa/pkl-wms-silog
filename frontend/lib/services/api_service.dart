@@ -612,4 +612,26 @@ Future<bool> deleteGudang(int idGudang) async {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getTransactionChart({String? year}) async {
+    String urlString = "$baseUrl/api/chart/transactions";
+    if (year != null) {
+      urlString += "?year=$year";
+    }
+    final url = Uri.parse(urlString);
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        throw Exception("Failed to load chart data");
+      }
+    } catch (e) {
+      print("ERROR API GET CHART: $e");
+      rethrow;
+    }
+  }
 }
