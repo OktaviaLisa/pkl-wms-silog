@@ -78,12 +78,10 @@ class _InventoryPageState extends State<InventoryPage> {
   Future<List<Inventory>> _loadInventoryData() async {
     try {
       final data = await api.getInventory(gudangId: currentGudangId!);
-      print('📦 Raw inventory data: $data');
 
       List<Inventory> inventoryList = [];
       for (var item in data) {
         try {
-          print('📦 Processing item: $item');
           inventoryList.add(Inventory.fromJson(item));
         } catch (e) {
           print('⚠️ Error parsing item: $item, error: $e');

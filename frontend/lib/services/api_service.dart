@@ -460,16 +460,27 @@ class ApiService {
 
   // UPDATE INBOUND STATUS → Update status inbound_stock
 
-  Future<bool> updateOrderStatus(int idOrder, String status) async {
+  Future<bool> updateOrderStatus(dynamic idOrder, String status) async {
     final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
 
-    final response = await http.put(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({"status": status}),
-    );
+    try {
+      print('🔍 Updating order status: $idOrder to $status');
+      print('🔍 URL: $url');
+      
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({"status": status}),
+      );
 
-    return response.statusCode == 200;
+      print('🔍 Response status: ${response.statusCode}');
+      print('🔍 Response body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('❌ Error updating order status: $e');
+      return false;
+    }
   }
 
   Future<List<dynamic>> getAllInventory() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'inventory.dart';
 
 class DetailInboundPage extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -97,26 +98,27 @@ class DetailInboundPage extends StatelessWidget {
                                         "idProduk": data['idProduk'] ?? data['id_produk'],
                                         "idGudang": gudangId,
                                         "volume": data['volume'] ?? 1,
-                                        "satuan": data['satuan'],
                                       };
+
+                                      print('🔍 Payload: $payload');
+                                      print('🔍 IdOrders: ${data['idOrders']}');
 
                                       final api = ApiService();
                                       bool addSuccess = await api.addInventory(payload);
 
                                       if (addSuccess) {
                                         bool updateSuccess =
-                                            await api.updateOrderStatus(data['idOrders'], 'inventory');
+                                            await api.updateOrderStatus(data['idOrders'], 'processed');
 
                                         if (updateSuccess) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
                                                 content: Text("Berhasil dipindahkan ke inventory")),
                                           );
-                                          Navigator.pushNamedAndRemoveUntil(
-                                          context,
-                                          '/inventory',
-                                          (route) => false,
-                                        );
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => const InventoryPage()),
+                                          );
                                         } else {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
