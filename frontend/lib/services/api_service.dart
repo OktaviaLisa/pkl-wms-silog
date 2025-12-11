@@ -371,7 +371,7 @@ class ApiService {
 
   // GET QUALITY CONTROL BY GUDANG ID
   Future<List<dynamic>> getQualityControl({required int gudangId}) async {
-    final url = Uri.parse("$baseUrl/api/quality-control?gudang_asal=$gudangId");
+    final url = Uri.parse("$baseUrl/api/quality-control?gudang_id=$gudangId");
 
     try {
       final response = await http.get(url);
@@ -387,6 +387,8 @@ class ApiService {
       rethrow;
     }
   }
+
+
 
   // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {

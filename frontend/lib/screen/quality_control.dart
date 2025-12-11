@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import 'dashboard.dart';
 
 // MODEL QC
 class QualityCheck {
@@ -42,7 +43,8 @@ class QualityControlPage extends StatefulWidget {
 class _QualityControlPageState extends State<QualityControlPage> {
   final ApiService api = ApiService();
   int? gudangId;
-  late Future<List<QualityCheck>> futureQC;
+
+  late Future<List<QualityCheck>> futureQC = Future.value([]);
 
   @override
   void initState() {
@@ -55,19 +57,19 @@ class _QualityControlPageState extends State<QualityControlPage> {
     gudangId = prefs.getInt('role_gudang');
 
     if (gudangId != null) {
-      setState(() {
-        futureQC = _loadQC();
-      });
+      futureQC = _loadQC();
     } else {
-      setState(() {
-        futureQC = Future.value([]);
-      });
+      futureQC = Future.value([]);
     }
+
+    if (mounted) setState(() {});
   }
 
   Future<List<QualityCheck>> _loadQC() async {
     try {
+      
       final data = await api.getQualityControl(gudangId: gudangId!);
+  
       return data.map((item) => QualityCheck.fromJson(item)).toList();
     } catch (e) {
       print("Error QC: $e");
@@ -76,10 +78,9 @@ class _QualityControlPageState extends State<QualityControlPage> {
   }
 
   String formatTanggal(String tanggal) {
-  if (tanggal.isEmpty || tanggal.length < 10) return tanggal;
-  return tanggal.substring(0, 10);
-}
-
+    if (tanggal.isEmpty || tanggal.length < 10) return tanggal;
+    return tanggal.substring(0, 10);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +92,11 @@ class _QualityControlPageState extends State<QualityControlPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            (route) => false,
+          ),
         ),
         backgroundColor: const Color(0xFF960B07),
       ),
@@ -115,10 +120,10 @@ class _QualityControlPageState extends State<QualityControlPage> {
                 elevation: 2,
                 child: ListTile(
                   leading: Icon(
-                  Icons.verified,
-                  color: const Color(0xFF960B07), // warna merah seperti homepage
-                  size: 32,
-                ),
+                    Icons.verified,
+                    color: const Color(0xFF960B07),
+                    size: 32,
+                  ),
                   title: Text(
                     item.namaProduk,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -143,3 +148,4 @@ class _QualityControlPageState extends State<QualityControlPage> {
     );
   }
 }
+

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'inventory.dart';
+import 'quality_control.dart';
+import 'dashboard.dart';
 
 class DetailInboundPage extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -236,6 +238,9 @@ class DetailInboundPage extends StatelessWidget {
 
                             SharedPreferences prefs =
                                 await SharedPreferences.getInstance();
+                      
+                          final selectedGudangId = prefs.getInt('role_gudang');
+                          final loggedInUserId = prefs.getInt('user_id');
 
                             final payload = {
                               "idOrders": data['idOrders'],
@@ -244,6 +249,8 @@ class DetailInboundPage extends StatelessWidget {
                                   .toIso8601String()
                                   .substring(0, 10), // <-- FORMAT FIX
                               "status_qc": "pending",
+                              "idGudang": selectedGudangId,  // tidak boleh 0
+                              "user_id": loggedInUserId       // WAJIB
                             };
 
                             final api = ApiService();
@@ -260,10 +267,11 @@ class DetailInboundPage extends StatelessWidget {
                                         "Data berhasil masuk QC")),
                               );
 
-                              Navigator.pushNamedAndRemoveUntil(
+                              Navigator.pushReplacement(
                                 context,
-                                '/quality-control',
-                                (route) => false,
+                                MaterialPageRoute(
+                                  builder: (context) => const QualityControlPage(),
+                                ),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(

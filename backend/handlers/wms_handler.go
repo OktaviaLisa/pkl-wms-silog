@@ -949,13 +949,12 @@ func (h *WMSHandler) GetAllInventory(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetQualityControl(c *gin.Context) {
-	gudangAsal := c.Query("gudang_asal") // optional filter berdasarkan gudang
-	if gudangAsal == "" {
-		c.JSON(400, gin.H{"error": "gudang_asal diperlukan"})
+	gudangID := c.Query("gudang_id")
+	if gudangID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
 		return
 	}
 
-	// Struct response sesuai Flutter
 	type QCResponse struct {
 		IdQC       int       `json:"id_qc"`
 		NamaProduk string    `json:"nama_produk"`
@@ -968,10 +967,10 @@ func (h *WMSHandler) GetQualityControl(c *gin.Context) {
 
 	qcs := []QCResponse{}
 
-	// LEFT JOIN agar QC tetap muncul walaupun relasi orders/produk kosong
 	result := h.db.Table("quality_control").
 		Joins("LEFT JOIN orders ON orders.idOrders = quality_control.idOrders").
 		Joins("LEFT JOIN produk ON produk.idProduk = orders.idProduk").
+		Where("quality_control.idGudang = ?", gudangID). // ⬅ Pakai ini saja
 		Order("quality_control.idQC DESC").
 		Scan(&qcs)
 
@@ -980,7 +979,6 @@ func (h *WMSHandler) GetQualityControl(c *gin.Context) {
 		return
 	}
 
-	// Pastikan slice tidak null
 	if qcs == nil {
 		qcs = []QCResponse{}
 	}
@@ -994,22 +992,22 @@ func (h *WMSHandler) GetQualityControl(c *gin.Context) {
 func (h *WMSHandler) AddQualityControl(c *gin.Context) {
 	var input struct {
 		IdOrders int    `json:"idOrders" binding:"required"`
+		IdGudang int    `json:"idGudang" binding:"required"`
 		Catatan  string `json:"catatan"`
 		StatusQC string `json:"status_qc" binding:"required"`
 	}
 
-	// Bind JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Buat record QC baru
 	newQC := models.QualityControl{
 		IdOrders: input.IdOrders,
+		IdGudang: input.IdGudang,
 		Catatan:  input.Catatan,
 		StatusQC: input.StatusQC,
-		TglQC:    time.Now(), // otomatis set tanggal QC saat ini
+		TglQC:    time.Now(),
 	}
 
 	if err := h.db.Create(&newQC).Error; err != nil {
