@@ -23,19 +23,27 @@ class _InboundPageState extends State<InboundPage> {
   }
 
   void _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    currentUserId = prefs.getInt('user_id');
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      currentUserId = prefs.getInt('user_id');
 
-    if (currentUserId != null) {
-      setState(() {
-        futureInbound = api.getInbound(userId: currentUserId);
-      });
-    } else {
-      print('⚠️ User belum login, redirect ke login page');
-      // Redirect ke login atau tampilkan pesan
-      setState(() {
-        futureInbound = Future.value([]);
-      });
+      if (!mounted) return;
+
+      if (currentUserId != null) {
+        setState(() {
+          futureInbound = api.getInbound(userId: currentUserId);
+        });
+      } else {
+        setState(() {
+          futureInbound = Future.value([]);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          futureInbound = Future.value([]);
+        });
+      }
     }
   }
 
@@ -52,10 +60,8 @@ class _InboundPageState extends State<InboundPage> {
           onPressed: () => Navigator.pop(context),
         ),
         backgroundColor: const Color(0xFF960B07),
-        elevation: 0,
       ),
 
-      // ================== BODY ==================
       body: FutureBuilder<List<dynamic>>(
         future: futureInbound,
         builder: (context, snapshot) {
@@ -64,7 +70,7 @@ class _InboundPageState extends State<InboundPage> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text("Tidak ada data inbound"));
+            return const Center(child: Text("Terjadi kesalahan, coba lagi"));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -73,96 +79,100 @@ class _InboundPageState extends State<InboundPage> {
 
           final inboundList = snapshot.data!;
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: inboundList.length,
-            itemBuilder: (context, index) {
-              final item = inboundList[index];
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: inboundList.length,
+                itemBuilder: (context, index) {
+                  final item = inboundList[index];
 
-              return InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetailInboundPage(data: item),
-                  ),
-                );
-              },
-       child: Card(
-              elevation: 3,
-              shadowColor: Colors.black26,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.inventory_2,
-                              color: Color(0xFF960B07),
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailInboundPage(data: item),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      elevation: 3,
+                      shadowColor: Colors.black26,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.inventory_2,
+                                      color: Color(0xFF960B07),
+                                      size: 28,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        "Kode Produk: ${item["kode_produk"]}\n"
+                                        "Nama Produk: ${item["nama_produk"]}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                        softWrap: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                _infoText("Gudang Asal", item["nama_gudang_asal"]),
+                                _infoText("Gudang Tujuan", item["nama_gudang_tujuan"]),
+                                _infoText("Tanggal Masuk", item["tanggal_masuk"]),
+                                _infoText("Deskripsi", item["deskripsi"]),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                          ),
+
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(item["status"]),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                               child: Text(
-                                "Kode Produk: ${item["kode_produk"]}\n"
-                                "Nama Produk: ${item["nama_produk"]}",
+                                _getStatusText(item["status"]),
                                 style: const TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        Text("Gudang Asal: ${item["nama_gudang_asal"]}"),
-                        Text("Gudang Tujuan: ${item["nama_gudang_tujuan"]}"),
-                        Text("Tanggal Masuk: ${item["tanggal_masuk"]}"),
-                        Text("Deskripsi: ${item["deskripsi"]}"),
-                      ],
-                    ),
-                  ),
-
-                  // ==================== BADGE STATUS ====================
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(item["status"]),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _getStatusText(item["status"]),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                          )
+                        ],
                       ),
                     ),
-                  )
-                ],
-              ),
-            )
-            );
-
+                  );
+                },
+              );
             },
           );
         },
       ),
 
-      // ================== FLOATING BUTTON ==================
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF960B07),
         child: const Icon(Icons.add, color: Colors.white),
@@ -171,9 +181,8 @@ class _InboundPageState extends State<InboundPage> {
             context,
             MaterialPageRoute(builder: (context) => const InputInboundPage()),
           );
-          
-          // Jika berhasil simpan inbound, refresh data
-          if (result == true) {
+
+          if (mounted && result == true) {
             _loadUserData();
           }
         },
@@ -181,31 +190,53 @@ class _InboundPageState extends State<InboundPage> {
     );
   }
 
-  // Fungsi untuk mendapatkan warna status
+  // Widget info lebih rapih & responsif
+  Widget _infoText(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: RichText(
+        text: TextSpan(
+          text: "$title: ",
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          children: [
+            TextSpan(
+              text: value.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'pending':
         return Colors.blue;
       case 'qc':
         return Colors.orange;
-      case 'processed':
+      case 'inventory':
         return Colors.green;
       default:
         return Colors.grey;
     }
   }
 
-  // Fungsi untuk mendapatkan teks status
   String _getStatusText(String? status) {
     switch (status) {
       case 'pending':
-        return 'PENDING';
+        return "Pending";
       case 'qc':
-        return 'QC';
-      case 'processed':
-        return 'INVENTORY';
+        return "QC";
+      case 'inventory':
+        return "Inventory";
       default:
-        return status?.toUpperCase() ?? 'UNKNOWN';
+        return "Unknown";
     }
   }
 }

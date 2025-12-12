@@ -152,13 +152,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data["data"];
+        return data["data"] ?? [];
       } else {
-        throw Exception("Failed to load inbound stock");
+        print("HTTP Error ${response.statusCode}: ${response.body}");
+        return [];
       }
     } catch (e) {
       print("ERROR API GET INBOUND: $e");
-      rethrow;
+      return [];
     }
   }
 

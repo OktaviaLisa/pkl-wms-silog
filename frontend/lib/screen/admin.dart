@@ -89,7 +89,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
 
                   _sidebarItem(
-                    Icons.inventory,
+                    Icons.door_back_door,
                     'Gudang',
                     onTap: () {
                       Navigator.push(
@@ -137,11 +137,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
             // Content ----------------------------------------------------------
             Expanded(
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Welcome, Admin 👋",
+                    "Welcome, Admin",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -169,39 +170,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   const SizedBox(height: 40),
 
-                  // CHART SECTION
-                  Container(
-                    height: 420, // naikkan sedikit biar chart punya ruang
-                    padding: const EdgeInsets.fromLTRB(
-                      20,
-                      20,
-                      20,
-                      40,
-                    ), // extra padding bawah
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 6,
-                        ),
-                      ],
+                 Container(
+                height: 520, // ← naikkan tinggi container
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20), // ← kurangi padding bawah
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Statistik Transaksi Bulanan",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF7B1E1E),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Expanded(
-                          child: FutureBuilder<Map<String, dynamic>>(
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Statistik Transaksi Bulanan",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF7B1E1E),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Expanded(
+                      child: FutureBuilder<Map<String, dynamic>>(
                             future: apiService.getTransactionChart(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
@@ -217,7 +212,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               }
 
                               final chartData = snapshot.data!['data'] as List;
-                              return _buildChart(chartData);
+                              return Column(
+                                children: [
+                                  _buildLegend(chartData),
+                                  const SizedBox(height: 20),
+                                  Expanded(child: _buildChart(chartData)),
+                                ],
+                              );
                             },
                           ),
                         ),
@@ -227,6 +228,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
             ),
+            )
           ],
         ),
       ),
@@ -364,13 +366,56 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               BarChartRodData(
                 toY: (item['outbound'] ?? 0).toDouble(),
-                color: Colors.red,
+                color: Colors.orange,
                 width: 12,
               ),
             ],
           );
         }).toList(),
       ),
+    );
+  }
+
+  Widget _buildLegend(List<dynamic> data) {
+    // Hitung total inbound dan outbound
+    int totalInbound = 0;
+    int totalOutbound = 0;
+    
+    for (var item in data) {
+      totalInbound += (item['inbound'] ?? 0) as int;
+      totalOutbound += (item['outbound'] ?? 0) as int;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _legendItem(Colors.blue, "Inbound", totalInbound),
+        const SizedBox(width: 30),
+        _legendItem(Colors.orange, "Outbound", totalOutbound),
+      ],
+    );
+  }
+
+  Widget _legendItem(Color color, String label, int total) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          "$label: $total",
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 

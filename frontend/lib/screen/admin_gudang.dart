@@ -239,6 +239,10 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
+      leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       backgroundColor: const Color(0xFF7B1E1E),
       title: const Text("Gudang Management", style: TextStyle(color: Colors.white)),
     ),

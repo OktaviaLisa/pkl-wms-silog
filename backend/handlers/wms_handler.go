@@ -803,7 +803,6 @@ func (h *WMSHandler) GetInventory(c *gin.Context) {
 
 	var response []map[string]interface{}
 	for _, item := range inventory {
-		fmt.Printf("📦 Produk ID: %d, IdSatuan: %d, Satuan: %+v\n", item.IdProduk, item.Produk.IdSatuan, item.Produk.Satuan)
 		response = append(response, map[string]interface{}{
 			"id_inventory": item.IdInventory,
 			"idProduk":     item.IdProduk,

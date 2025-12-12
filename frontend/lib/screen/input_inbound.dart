@@ -198,7 +198,6 @@ class _InputInboundPageState extends State<InputInboundPage> {
           
           // Debug: print struktur data gudang
           if (gudangAsalList.isNotEmpty) {
-            print('📍 Data gudang asal:');
             print(gudangAsalList.first);
           }
 
@@ -215,6 +214,21 @@ class _InputInboundPageState extends State<InputInboundPage> {
 
   @override
   Widget build(BuildContext context) {
+      if (selectedGudangAsal != null &&
+          !gudangAsalList.any((g) => g['nama_gudang'] == selectedGudangAsal)) {
+        selectedGudangAsal = null;
+      }
+
+      if (selectedAlamatGudangAsal != null && selectedGudangAsal != null) {
+        final gudang = gudangAsalList.firstWhere(
+          (g) => g['nama_gudang'] == selectedGudangAsal,
+          orElse: () => null,
+        );
+
+        if (gudang == null || gudang['alamat'] != selectedAlamatGudangAsal) {
+          selectedAlamatGudangAsal = null;
+        }
+      }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Input Inbound Stock", style: TextStyle(color: Colors.white)),
@@ -342,133 +356,59 @@ class _InputInboundPageState extends State<InputInboundPage> {
 
             const SizedBox(height: 25),
 
-            // ------ Lanjut input gudang (TIDAK DIUBAH) ------
-            Row(
-              children: [
-                const Text('Gudang Asal *'),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      isManualGudang = !isManualGudang;
-                      if (isManualGudang) {
-                        selectedGudangAsal = null;
-                        gudangAsalController.clear();
-                      }
-                    });
-                  },
-                  child: Text(isManualGudang ? 'Pilih dari List' : 'Tambah Data'),
-                ),
-              ],
-            ),
-
+            // =============================
+            //        Gudang Asal
+            // =============================
+            const Text('Gudang Asal *'),
             const SizedBox(height: 8),
 
-            isManualGudang
-                ? TextField(
-                    controller: gudangAsalController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Masukkan nama gudang baru',
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedAlamatGudangAsal = null;
-                        alamatGudangAsalController.clear();
-                        isManualAlamat = true;
-                      });
-                    },
-                  )
-                : DropdownButtonFormField<String>(
-                    value: selectedGudangAsal,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Pilih gudang asal',
-                    ),
-                    items: gudangAsalList.map<DropdownMenuItem<String>>((gudang) {
-                      return DropdownMenuItem<String>(
-                        value: gudang['nama_gudang'],
-                        child: Text(gudang['nama_gudang']),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedGudangAsal = value;
-                        gudangAsalController.text = value ?? '';
-                        selectedAlamatGudangAsal = null;
-                        alamatGudangAsalController.text = '';
-                        isManualAlamat = false;
-                        
-                        // Debug: print gudang yang dipilih
-                        if (value != null) {
-                          final selectedGudangData = gudangAsalList.firstWhere(
-                            (g) => g['nama_gudang'] == value,
-                            orElse: () => null,
-                          );
-                        }
-                      });
-                    },
-                  ),
+            DropdownButtonFormField<String>(
+              value: selectedGudangAsal,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Pilih gudang asal',
+              ),
+              items: gudangAsalList.map<DropdownMenuItem<String>>((gudang) {
+                return DropdownMenuItem<String>(
+                  value: gudang['nama_gudang'],
+                  child: Text(gudang['nama_gudang']),
+                );
+              }).toList(),
+              onChanged: (String? value) {
+                setState(() {
+                  selectedGudangAsal = value;
+                  gudangAsalController.text = value ?? '';
+
+                  // Auto fill alamat berdasarkan gudang yang dipilih
+                  final selected = gudangAsalList.firstWhere(
+                    (g) => g['nama_gudang'] == value,
+                  );
+
+                  alamatGudangAsalController.text = selected['alamat'] ?? 'Alamat belum terdaftar';
+                });
+              },
+            ),
 
             const SizedBox(height: 20),
 
-            // ------ Alamat Gudang Asal ------
-            Row(
-              children: [
-                const Text('Alamat Gudang Asal *'),
-                const Spacer(),
-                if (!isManualGudang)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        isManualAlamat = !isManualAlamat;
-                        if (isManualAlamat) {
-                          selectedAlamatGudangAsal = null;
-                          alamatGudangAsalController.clear();
-                        }
-                      });
-                    },
-                    child: Text(isManualAlamat ? 'Pilih dari List' : 'Tambah Data'),
-                  ),
-              ],
-            ),
-
+            // =============================
+            //    Alamat Gudang Asal
+            // =============================
+            const Text('Alamat Gudang Asal *'),
             const SizedBox(height: 8),
 
-            (isManualGudang || isManualAlamat)
-                ? TextField(
-                    controller: alamatGudangAsalController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Masukkan alamat gudang',
-                    ),
-                  )
-                : DropdownButtonFormField<String>(
-                    value: selectedAlamatGudangAsal,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Pilih alamat gudang asal',
-                    ),
-                    items: selectedGudangAsal != null
-                        ? gudangAsalList
-                            .where((g) => g['nama_gudang'] == selectedGudangAsal)
-                            .map<DropdownMenuItem<String>>((g) {
-                              String alamat = g['alamat'] ?? 'Alamat belum diisi';
-                              return DropdownMenuItem<String>(
-                                value: alamat,
-                                child: Text(alamat),
-                              );
-                            }).toList()
-                        : [],
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedAlamatGudangAsal = value;
-                        alamatGudangAsalController.text = value ?? '';
-                      });
-                    },
-                  ),
+            TextField(
+              controller: alamatGudangAsalController,
+              readOnly: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Color(0xFFEFEFEF), // agar terlihat disabled
+                hintText: 'Alamat otomatis terisi berdasarkan gudang',
+              ),
+            ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
             // ------ Gudang Tujuan Auto ------
             const Text('Gudang Tujuan * (Auto)'),
@@ -545,25 +485,19 @@ class _InputInboundPageState extends State<InputInboundPage> {
 
             // Button
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF960B07),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              onPressed: isLoading ? null : _submitInbound,
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF960B07),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    )
-                  : const Text(
-                      'Simpan Inbound',
+                    ),
+                    onPressed: _submitInbound,
+                    child: const Text(
+                      'Simpan Outbound',
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
-            ),
+                  ),
           ],
         ),
       ),
