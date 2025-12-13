@@ -125,38 +125,6 @@ class _AdminGudangPageState extends State<AdminGudangPage> {
     );
   }
 
-  // HAPUS GUDANG //
-  void confirmDelete(Map g) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Konfirmasi Hapus"),
-          content: Text("Yakin ingin menghapus gudang '${g["nama_gudang"]}' ?"),
-          actions: [
-            TextButton(
-              child: const Text("Batal"),
-              onPressed: () => Navigator.pop(context),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("Hapus"),
-              onPressed: () async {
-                await apiService.deleteGudang(g["idGudang"]);
-                Navigator.pop(context);
-                fetchGudang();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // TAMBAH GUDANG //
   void showCreateGudangDialog() {
     final namaController = TextEditingController();
@@ -300,10 +268,6 @@ Widget build(BuildContext context) {
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Color(0xFF7B1E1E)),
                                       onPressed: () => showEditGudangDialog(g),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => confirmDelete(g),
                                     ),
                                   ],
                                 ),
