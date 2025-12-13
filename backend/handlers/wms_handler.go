@@ -490,21 +490,6 @@ func (h *WMSHandler) UpdateGudang(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Gudang updated"})
 }
 
-func (h *WMSHandler) DeleteGudang(c *gin.Context) {
-	id := c.Param("id")
-
-	if err := h.db.Delete(&models.Gudang{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal menghapus gudang: " + err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Gudang berhasil dihapus",
-	})
-}
-
 // OUTBOUND
 func (h *WMSHandler) GetOutbound(c *gin.Context) {
 	userID := c.Query("user_id")
