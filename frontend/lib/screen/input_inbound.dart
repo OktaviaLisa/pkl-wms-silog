@@ -132,25 +132,57 @@ class _InputInboundPageState extends State<InputInboundPage> {
     setState(() => isLoading = true);
 
     try {
-  // Jika input manual → buat produk baru
+  String finalKodeProduk = kodeProdukController.text.trim();
+  String finalNamaProduk = namaProdukController.text.trim();
+  
+  print("=== DEBUG INPUT MANUAL ===");
+  print("isManualProduk: $isManualProduk");
+  print("Input kode produk: $finalKodeProduk");
+  print("Input nama produk: $finalNamaProduk");
+  
+  // Jika input manual → buat produk baru dan dapatkan data yang benar
   if (isManualProduk) {
-    await api.createProduk(
-      kodeProduk: kodeProdukController.text.trim(),
-      namaProduk: namaProdukController.text.trim(),
+    print("Membuat produk baru dengan kode: $finalKodeProduk");
+    
+    final newProduk = await api.createProduk(
+      kodeProduk: finalKodeProduk,
+      namaProduk: finalNamaProduk,
     );
+    
+    print("Response dari createProduk: $newProduk");
+    
+    // Pastikan menggunakan kode produk yang benar dari input user
+    if (newProduk != null && newProduk is Map<String, dynamic>) {
+      // Validasi bahwa kode produk tersimpan sesuai input
+      final savedKode = newProduk['kode_produk'];
+      if (savedKode != finalKodeProduk) {
+        print("WARNING: Kode produk berubah dari $finalKodeProduk menjadi $savedKode");
+      }
+      finalKodeProduk = savedKode ?? finalKodeProduk;
+      finalNamaProduk = newProduk['nama_produk'] ?? finalNamaProduk;
+    }
+    
+    print("Kode produk yang akan digunakan: $finalKodeProduk");
+    
+    // Refresh list produk setelah menambah produk baru
+    await _loadProduk();
   }
 
   // Jika input manual untuk gudang → tambah gudang baru
   if (isManualGudang) {
-    await api.createGudang(
+    final newGudang = await api.createGudang(
       namaGudang: gudangAsalController.text.trim(),
       alamat: alamatGudangAsalController.text.trim(),
     );
+    
+    if (newGudang != null) {
+      print("Gudang baru berhasil dibuat: $newGudang");
+    }
   }
 
   final data = {
-    "nama_produk": namaProdukController.text.trim(),
-    "kode_produk": kodeProdukController.text.trim(),
+    "nama_produk": finalNamaProduk,
+    "kode_produk": finalKodeProduk,
     "volume": int.tryParse(volumeProdukController.text.trim()) ?? 0,
     "gudang_asal": gudangAsalController.text.trim(),
     "alamat_gudang_asal": alamatGudangAsalController.text.trim(),
@@ -159,6 +191,12 @@ class _InputInboundPageState extends State<InputInboundPage> {
         "${tanggalMasuk!.year}-${tanggalMasuk!.month.toString().padLeft(2, '0')}-${tanggalMasuk!.day.toString().padLeft(2, '0')}",
     "deskripsi": deskripsiController.text.trim(),
   };
+  
+  print("=== DATA FINAL ===");
+  print("Data yang akan dikirim: $data");
+  print("Kode produk final: $finalKodeProduk");
+  print("Nama produk final: $finalNamaProduk");
+  print("==================");
       final success = await api.createInbound(data);
       if (success == true) {
       ScaffoldMessenger.of(context).showSnackBar(

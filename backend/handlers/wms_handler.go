@@ -288,6 +288,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 			"volume":             item.Volume,
 			"status":             item.Status,
 			"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
+			"deskripsi":          item.Deskripsi,
 			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
 			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
 		})
@@ -382,7 +383,7 @@ func (h *WMSHandler) GetUserGudang(c *gin.Context) {
 	})
 }
 
-func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
+func (h *WMSHandler) GetOrCreateProduk(kodeProduk, nama string) (int, error) {
 
 	var p models.Produk
 
@@ -392,7 +393,7 @@ func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
 	}
 
 	newP := models.Produk{
-		KodeProduk: "AUTO-" + nama,
+		KodeProduk: kodeProduk,
 		NamaProduk: nama,
 		IdSatuan:   1,
 	}
@@ -435,6 +436,7 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 
 	var input struct {
 		NamaProduk   string `json:"nama_produk"`
+		KodeProduk   string `json:"kode_produk"`
 		GudangAsal   string `json:"gudang_asal"`
 		GudangTujuan string `json:"gudang_tujuan"`
 		Volume       int    `json:"volume"`
@@ -447,8 +449,13 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 		return
 	}
 
-	// 1. Cari atau buat produk
-	idProduk, err := h.GetOrCreateProduk(input.NamaProduk)
+	fmt.Printf("=== INPUT RECEIVED ===\n")
+	fmt.Printf("Kode Produk: %s\n", input.KodeProduk)
+	fmt.Printf("Nama Produk: %s\n", input.NamaProduk)
+	fmt.Printf("======================\n")
+
+	// 1. Cari atau buat produk dengan kode yang benar
+	idProduk, err := h.GetOrCreateProduk(input.KodeProduk, input.NamaProduk)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat produk"})
 		return
@@ -773,7 +780,7 @@ func (h *WMSHandler) CreateProduk(c *gin.Context) {
 
 	var produk models.Produk
 
-	// Bind JSON ke struct Gudang
+	// Bind JSON ke struct Produk
 	if err := c.ShouldBindJSON(&produk); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid input: " + err.Error(),
@@ -781,17 +788,30 @@ func (h *WMSHandler) CreateProduk(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("=== CREATE PRODUK ===\n")
+	fmt.Printf("Input Kode: %s\n", produk.KodeProduk)
+	fmt.Printf("Input Nama: %s\n", produk.NamaProduk)
+
+	// Set default satuan jika belum ada
+	if produk.IdSatuan == 0 {
+		produk.IdSatuan = 1
+	}
+
 	// Save ke database
 	if err := h.db.Create(&produk).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal membuat gudang: " + err.Error(),
+			"error": "Gagal membuat produk: " + err.Error(),
 		})
 		return
 	}
 
+	fmt.Printf("Produk berhasil dibuat dengan ID: %d\n", produk.IdProduk)
+	fmt.Printf("Kode tersimpan: %s\n", produk.KodeProduk)
+	fmt.Printf("=====================\n")
+
 	// Response sukses
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Gudang berhasil dibuat",
+		"message": "Produk berhasil dibuat",
 		"data":    produk,
 	})
 }

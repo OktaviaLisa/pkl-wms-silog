@@ -282,7 +282,7 @@ class ApiService {
   }
 
   // CREATE PRODUK
-  Future<bool> createProduk({
+  Future<Map<String, dynamic>?> createProduk({
     required String kodeProduk,
     required String namaProduk,
   }) async {
@@ -299,7 +299,16 @@ class ApiService {
         }),
       );
 
-      return response.statusCode == 200 || response.statusCode == 201;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? {
+          "kode_produk": kodeProduk,
+          "nama_produk": namaProduk,
+        };
+      } else {
+        print("ERROR CREATE PRODUK: ${response.body}");
+        return null;
+      }
     } catch (e) {
       print("ERROR API CREATE PRODUK: $e");
       rethrow;
@@ -307,7 +316,7 @@ class ApiService {
   }
 
   // CREATE GUDANG
-  Future<bool> createGudang({
+  Future<Map<String, dynamic>?> createGudang({
   required String namaGudang,
   required String alamat,
 }) async {
@@ -324,7 +333,16 @@ class ApiService {
       }),
     );
 
-    return response.statusCode == 200 || response.statusCode == 201;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data["data"] ?? {
+        "nama_gudang": namaGudang,
+        "alamat": alamat,
+      };
+    } else {
+      print("ERROR CREATE GUDANG: ${response.body}");
+      return null;
+    }
   } catch (e) {
     print("ERROR API CREATE GUDANG: $e");
     rethrow;
