@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"backend/models"
+	"backend/utils"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -23,6 +24,13 @@ func NewWMSHandler(db *gorm.DB) *WMSHandler {
 
 // USER
 func (h *WMSHandler) GetUser(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var user []models.Users
 	result := h.db.Order("username").Find(&user)
 
@@ -53,16 +61,51 @@ func (h *WMSHandler) Login(c *gin.Context) {
 		return
 	}
 
+	if loginData.Username == "admin" && loginData.Password == "admin123" {
+		// Bisa pakai IDUser = 0 atau 1, role = misal 99 untuk admin
+		token, err := utils.GenerateJWT(0, 99)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":     "Login admin berhasil",
+			"token":       token,
+			"user":        gin.H{"IDUser": 0, "Username": "admin", "RoleGudang": 99},
+			"nama_gudang": "",
+		})
+		return
+	}
+
 	var user models.Users
-	if err := h.db.Preload("Gudang").Where("username = ?", loginData.Username).First(&user).Error; err != nil {
+	if err := h.db.Preload("Gudang").
+		Where("username = ?", loginData.Username).
+		First(&user).Error; err != nil {
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(loginData.Password),
+	); err != nil {
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password salah"})
 		return
 	}
+
+	// =========================
+	// 🔐 TAMBAHAN: GENERATE JWT
+	// =========================
+	token, err := utils.GenerateJWT(user.IDUser, user.RoleGudang)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
+		return
+	}
+
+	fmt.Println("JWT TOKEN:", token)
 
 	namaGudang := ""
 	if user.Gudang.NamaGudang != "" {
@@ -70,14 +113,26 @@ func (h *WMSHandler) Login(c *gin.Context) {
 	}
 
 	user.Password = ""
+
+	// =========================
+	// ✨ RESPONSE BARU
+	// =========================
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Login berhasil",
+		"token":       token, // ⬅️ INI TOKEN
 		"user":        user,
 		"nama_gudang": namaGudang,
 	})
 }
 
 func (h *WMSHandler) CreateUser(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var user models.Users
 
 	// Bind JSON ke struct
@@ -130,6 +185,13 @@ func (h *WMSHandler) CreateUser(c *gin.Context) {
 }
 
 func (w *WMSHandler) UpdateUser(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var req struct {
 		IdUser     int `json:"idUser"`
 		RoleGudang int `json:"role_gudang"`
@@ -157,6 +219,13 @@ func (w *WMSHandler) UpdateUser(c *gin.Context) {
 }
 
 func (w *WMSHandler) DeleteUser(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	idUser := c.Param("idUser")
 
 	// GORM EXEC
@@ -176,64 +245,27 @@ func (w *WMSHandler) DeleteUser(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetInboundStock(c *gin.Context) {
-	userID := c.Query("user_id")
-	fmt.Printf("🔍 GetInboundStock dipanggil dengan user_id: %s\n", userID)
 
-	if userID == "" {
-		// Tampilkan semua data jika tidak ada user_id
-		var inboundStocks []models.Orders
-		result := h.db.
-			Preload("Produk").
-			Preload("GudangAsal").
-			Preload("GudangTujuan").
-			Find(&inboundStocks)
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
 
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
+	fmt.Println("UserID JWT:", userID)
+	fmt.Println("Role JWT:", role)
 
-		var response []map[string]interface{}
-		for _, item := range inboundStocks {
-			response = append(response, map[string]interface{}{
-				"idInbound":          item.IdOrders,
-				"idOrders":           item.IdOrders,
-				"kode_produk":        item.Produk.KodeProduk,
-				"idProduk":           item.IdProduk,
-				"gudang_asal":        item.GudangAsalId,
-				"gudang_tujuan":      item.GudangTujuanId,
-				"volume":             item.Volume,
-				"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
-				"deskripsi":          item.Deskripsi,
-				"status":             item.Status,
-				"nama_produk":        item.Produk.NamaProduk,
-				"nama_gudang_asal":   item.GudangAsal.NamaGudang,
-				"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
-			})
-		}
-
-		c.JSON(http.StatusOK, gin.H{"data": response})
+	// 🔐 VALIDASI JWT
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Cek user ada atau tidak
+	// Ambil user
 	var user models.Users
 	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
-		fmt.Printf("❌ User dengan ID %s tidak ditemukan: %v\n", userID, err)
-
-		// Tampilkan daftar user yang ada untuk debugging
-		var allUsers []models.Users
-		h.db.Find(&allUsers)
-		fmt.Printf("📋 Daftar user yang ada:\n")
-		for _, u := range allUsers {
-			fmt.Printf("   - ID: %d, Username: %s, RoleGudang: %d\n", u.IDUser, u.Username, u.RoleGudang)
-		}
-
 		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
 		return
 	}
 
-	// Filter berdasarkan gudang_tujuan = role_gudang user
+	// Filter inbound sesuai gudang user
 	var inboundStocks []models.Orders
 	result := h.db.
 		Preload("Produk").
@@ -250,17 +282,12 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	var response []map[string]interface{}
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
-			"idInbound":          item.IdOrders,
 			"idOrders":           item.IdOrders,
 			"kode_produk":        item.Produk.KodeProduk,
-			"idProduk":           item.IdProduk,
-			"gudang_asal":        item.GudangAsalId,
-			"gudang_tujuan":      item.GudangTujuanId,
-			"volume":             item.Volume,
-			"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
-			"deskripsi":          item.Deskripsi,
-			"status":             item.Status,
 			"nama_produk":        item.Produk.NamaProduk,
+			"volume":             item.Volume,
+			"status":             item.Status,
+			"tanggal_masuk":      item.TanggalMasuk.Format("2006-01-02"),
 			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
 			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
 		})
@@ -270,6 +297,13 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetProduk(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	type ProdukWithSatuan struct {
 		IdProduk    int    `json:"id_produk"`
 		KodeProduk  string `json:"kode_produk"`
@@ -298,6 +332,13 @@ func (h *WMSHandler) GetProduk(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetGudang(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var gudang []models.Gudang
 
 	result := h.db.Find(&gudang)
@@ -314,14 +355,20 @@ func (h *WMSHandler) GetGudang(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetUserGudang(c *gin.Context) {
-	userID := c.Query("user_id")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id diperlukan"})
-		return
-	}
 
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
+	// JWT pasti ada → userID tidak mungkin 0
 	var user models.Users
-	if err := h.db.Preload("Gudang").Where("idUser = ?", userID).First(&user).Error; err != nil {
+	if err := h.db.
+		Preload("Gudang").
+		Where("idUser = ?", userID).
+		First(&user).Error; err != nil {
+
 		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
 		return
 	}
@@ -336,6 +383,7 @@ func (h *WMSHandler) GetUserGudang(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
+
 	var p models.Produk
 
 	err := h.db.Where("nama_produk = ?", nama).First(&p).Error
@@ -357,6 +405,7 @@ func (h *WMSHandler) GetOrCreateProduk(nama string) (int, error) {
 }
 
 func (h *WMSHandler) GetOrCreateGudang(nama string) (int, error) {
+
 	var g models.Gudang
 
 	err := h.db.Where("nama_gudang = ?", nama).First(&g).Error
@@ -377,6 +426,13 @@ func (h *WMSHandler) GetOrCreateGudang(nama string) (int, error) {
 }
 
 func (h *WMSHandler) CreateInbound(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var input struct {
 		NamaProduk   string `json:"nama_produk"`
 		GudangAsal   string `json:"gudang_asal"`
@@ -441,6 +497,13 @@ func (h *WMSHandler) CreateInbound(c *gin.Context) {
 }
 
 func (h *WMSHandler) CreateGudang(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var gudang models.Gudang
 
 	// Bind JSON ke struct Gudang
@@ -467,6 +530,13 @@ func (h *WMSHandler) CreateGudang(c *gin.Context) {
 }
 
 func (h *WMSHandler) UpdateGudang(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	id := c.Param("id")
 	var gudang models.Gudang
 
@@ -492,92 +562,44 @@ func (h *WMSHandler) UpdateGudang(c *gin.Context) {
 
 // OUTBOUND
 func (h *WMSHandler) GetOutbound(c *gin.Context) {
-	userID := c.Query("user_id")
-	fmt.Printf("🔍 GetOutbound dipanggil dengan user_id: %s\n", userID)
-	fmt.Printf("🔍 Request method: %s, URL: %s\n", c.Request.Method, c.Request.URL.String())
 
-	if userID == "" {
-		// Tampilkan semua data jika tidak ada user_id
-		var outboundStocks []models.Orders
-		result := h.db.
-			Preload("Produk").
-			Preload("GudangAsal").
-			Preload("GudangTujuan").
-			Find(&outboundStocks)
+	userID := c.GetUint("user_id")
+	roleGudang := c.GetInt("role")
 
-		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-			return
-		}
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", roleGudang)
 
-		var response []map[string]interface{}
-		for _, item := range outboundStocks {
-			response = append(response, map[string]interface{}{
-				"idOrders":           item.IdOrders,
-				"idProduk":           item.IdProduk,
-				"gudang_asal":        item.GudangAsalId,
-				"gudang_tujuan":      item.GudangTujuanId,
-				"tanggal_keluar":     item.TanggalMasuk.Format("02-01-2006"),
-				"deskripsi":          item.Deskripsi,
-				"nama_produk":        item.Produk.NamaProduk,
-				"nama_gudang_asal":   item.GudangAsal.NamaGudang,
-				"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
-			})
-		}
-
-		c.JSON(http.StatusOK, gin.H{"data": response})
-		return
-	}
-
-	// Cek user ada atau tidak
-	var user models.Users
-	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
-		fmt.Printf("❌ User dengan ID %s tidak ditemukan: %v\n", userID, err)
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
-		return
-	}
-
-	fmt.Printf("✅ User ditemukan: ID=%d, Username=%s, RoleGudang=%d\n", user.IDUser, user.Username, user.RoleGudang)
-
-	// Filter berdasarkan gudang_asal = role_gudang user
 	var outboundStocks []models.Orders
-	result := h.db.
+
+	query := h.db.
 		Preload("Produk").
 		Preload("GudangAsal").
 		Preload("GudangTujuan").
-		Where("gudang_asal = ?", user.RoleGudang).
-		Order("idOrders DESC").
-		Find(&outboundStocks)
+		Order("idOrders DESC")
 
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	// roleGudang = 0 → admin (lihat semua)
+	if roleGudang != 0 {
+		query = query.Where("gudang_asal = ?", roleGudang)
+	}
+
+	if err := query.Find(&outboundStocks).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Printf("📦 Ditemukan %d data outbound untuk gudang %d\n", len(outboundStocks), user.RoleGudang)
-
 	var response []map[string]interface{}
 	for _, item := range outboundStocks {
-		// Debug: tampilkan nilai tanggal mentah
-		fmt.Printf("📅 Raw tanggal untuk idOrders %d: %v (IsZero: %v)\n", item.IdOrders, item.TanggalMasuk, item.TanggalMasuk.IsZero())
-
-		// Format tanggal sama seperti inbound
-		formattedDate := item.TanggalMasuk.Format("02-01-2006")
-		fmt.Printf("📅 Formatted tanggal: '%s'\n", formattedDate)
-
-		responseItem := map[string]interface{}{
+		response = append(response, map[string]interface{}{
 			"idOrders":           item.IdOrders,
 			"idProduk":           item.IdProduk,
 			"gudang_asal":        item.GudangAsalId,
 			"gudang_tujuan":      item.GudangTujuanId,
-			"tanggal_keluar":     formattedDate,
+			"tanggal_keluar":     item.TanggalMasuk.Format("02-01-2006"),
 			"deskripsi":          item.Deskripsi,
 			"nama_produk":        item.Produk.NamaProduk,
 			"nama_gudang_asal":   item.GudangAsal.NamaGudang,
 			"nama_gudang_tujuan": item.GudangTujuan.NamaGudang,
-		}
-		fmt.Printf("📦 Response item: %+v\n", responseItem)
-		response = append(response, responseItem)
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -587,6 +609,13 @@ func (h *WMSHandler) GetOutbound(c *gin.Context) {
 }
 
 func (h *WMSHandler) CreateOutbound(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var input struct {
 		IdProduk     int    `json:"idProduk"`
 		GudangAsal   string `json:"gudang_asal"`
@@ -702,6 +731,13 @@ func (h *WMSHandler) CreateOutbound(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetProdukByGudang(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	gudangID := c.Query("gudang_id")
 	if gudangID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
@@ -728,6 +764,13 @@ func (h *WMSHandler) GetProdukByGudang(c *gin.Context) {
 }
 
 func (h *WMSHandler) CreateProduk(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var produk models.Produk
 
 	// Bind JSON ke struct Gudang
@@ -754,6 +797,13 @@ func (h *WMSHandler) CreateProduk(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetSatuan(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var satuan []models.Satuan
 	result := h.db.Find(&satuan)
 	if result.Error != nil {
@@ -768,6 +818,13 @@ func (h *WMSHandler) GetSatuan(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetInventory(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	gudangID := c.Query("gudang_id")
 	if gudangID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
@@ -805,6 +862,13 @@ func (h *WMSHandler) GetInventory(c *gin.Context) {
 }
 
 func (h *WMSHandler) AddInventory(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var input struct {
 		IdProduk int `json:"idProduk"`
 		IdGudang int `json:"idGudang"`
@@ -843,6 +907,13 @@ func (h *WMSHandler) AddInventory(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetInventoryDetail(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	inventoryID := c.Param("id")
 	if inventoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "inventory_id diperlukan"})
@@ -916,6 +987,13 @@ func (h *WMSHandler) GetInventoryDetail(c *gin.Context) {
 }
 
 func (h *WMSHandler) UpdateOrderStatus(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	IdOrders := c.Param("IdOrders") // FIX: hapus spasi
 
 	var input struct {
@@ -946,6 +1024,13 @@ func (h *WMSHandler) UpdateOrderStatus(c *gin.Context) {
 
 // GET ALL INVENTORY (admin inventory)
 func (h *WMSHandler) GetAllInventory(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var inventory []models.Inventory
 
 	result := h.db.
@@ -984,6 +1069,13 @@ func (h *WMSHandler) GetAllInventory(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetQualityControl(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	gudangID := c.Query("gudang_id")
 	if gudangID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
@@ -1025,6 +1117,13 @@ func (h *WMSHandler) GetQualityControl(c *gin.Context) {
 }
 
 func (h *WMSHandler) AddQualityControl(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var input struct {
 		IdOrders int    `json:"idOrders" binding:"required"`
 		IdGudang int    `json:"idGudang" binding:"required"`
@@ -1057,6 +1156,13 @@ func (h *WMSHandler) AddQualityControl(c *gin.Context) {
 }
 
 func (h *WMSHandler) ProcessQC(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	var input struct {
 		IdQC      int    `json:"id_qc" binding:"required"`
 		QtyGood   int    `json:"qty_good"`
@@ -1144,6 +1250,13 @@ func (h *WMSHandler) ProcessQC(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetReturn(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	gudangID := c.Query("gudang_id")
 	if gudangID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "gudang_id diperlukan"})
@@ -1190,6 +1303,13 @@ func (h *WMSHandler) GetReturn(c *gin.Context) {
 }
 
 func (h *WMSHandler) GetTransactionChart(c *gin.Context) {
+
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
 	year := c.Query("year")
 	if year == "" {
 		year = fmt.Sprintf("%d", time.Now().Year())

@@ -2,37 +2,66 @@ package routes
 
 import (
 	"backend/handlers"
+	"backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 
-	// contoh endpoint get users
-	r.GET("/api/user/user", h.WMS.GetUser)
-	r.POST("/api/user/user", h.WMS.CreateUser)
+	// =====================
+	// 🔓 PUBLIC (NO TOKEN)
+	// =====================
 	r.POST("/api/auth/login", h.WMS.Login)
-	r.GET("/api/inbound/list", h.WMS.GetInboundStock)
-	r.POST("/api/inbound/create", h.WMS.CreateInbound)
-	r.GET("/api/produk/list", h.WMS.GetProduk)
-	r.POST("/api/produk/create", h.WMS.CreateProduk)
-	r.GET("/api/gudang/list", h.WMS.GetGudang)
-	r.POST("/api/gudang/create", h.WMS.CreateGudang)
-	r.PUT("/api/gudang/update/:id", h.WMS.UpdateGudang)
-	r.GET("/api/gudang/user", h.WMS.GetUserGudang)
-	r.GET("/api/outbound/getOutbound", h.WMS.GetOutbound)
-	r.POST("/api/outbound/postOutbound", h.WMS.CreateOutbound)
-	r.GET("/api/satuan/list", h.WMS.GetSatuan)
-	r.GET("/api/inventory/list", h.WMS.GetInventory)
-	r.POST("/api/inventory/add", h.WMS.AddInventory)
-	r.PUT("/api/orders/update-status/:IdOrders", h.WMS.UpdateOrderStatus)
-	r.GET("/api/inventory/all", h.WMS.GetAllInventory)
-	r.GET("/api/inventory/detail/:id", h.WMS.GetInventoryDetail)
-	r.PUT("/api/user/update", h.WMS.UpdateUser)
-	r.DELETE("/api/user/delete/:idUser", h.WMS.DeleteUser)
-	r.POST("/api/quality-control/add", h.WMS.AddQualityControl)
-	r.GET("/api/quality-control", h.WMS.GetQualityControl)
-	r.POST("/api/quality-control/process", h.WMS.ProcessQC)
-	r.GET("/api/return", h.WMS.GetReturn)
-	r.GET("/api/chart/transactions", h.WMS.GetTransactionChart)
+
+	// =====================
+	// 🔐 PROTECTED (JWT)
+	// =====================
+	auth := r.Group("/api")
+	auth.Use(middleware.AuthMiddleware())
+
+	// USER
+	auth.GET("/user/user", h.WMS.GetUser)
+	auth.POST("/user/user", h.WMS.CreateUser)
+	auth.PUT("/user/update", h.WMS.UpdateUser)
+	auth.DELETE("/user/delete/:idUser", h.WMS.DeleteUser)
+
+	// INBOUND
+	auth.GET("/inbound/list", h.WMS.GetInboundStock)
+	auth.POST("/inbound/create", h.WMS.CreateInbound)
+
+	// PRODUK
+	auth.GET("/produk/list", h.WMS.GetProduk)
+	auth.POST("/produk/create", h.WMS.CreateProduk)
+
+	// GUDANG
+	auth.GET("/gudang/list", h.WMS.GetGudang)
+	auth.POST("/gudang/create", h.WMS.CreateGudang)
+	auth.PUT("/gudang/update/:id", h.WMS.UpdateGudang)
+	auth.GET("/gudang/user", h.WMS.GetUserGudang)
+
+	// OUTBOUND
+	auth.GET("/outbound/getOutbound", h.WMS.GetOutbound)
+	auth.POST("/outbound/postOutbound", h.WMS.CreateOutbound)
+
+	// SATUAN
+	auth.GET("/satuan/list", h.WMS.GetSatuan)
+
+	// INVENTORY
+	auth.GET("/inventory/list", h.WMS.GetInventory)
+	auth.GET("/inventory/all", h.WMS.GetAllInventory)
+	auth.GET("/inventory/detail/:id", h.WMS.GetInventoryDetail)
+	auth.POST("/inventory/add", h.WMS.AddInventory)
+
+	// ORDERS
+	auth.PUT("/orders/update-status/:IdOrders", h.WMS.UpdateOrderStatus)
+
+	// QUALITY CONTROL
+	auth.POST("/quality-control/add", h.WMS.AddQualityControl)
+	auth.GET("/quality-control", h.WMS.GetQualityControl)
+	auth.POST("/quality-control/process", h.WMS.ProcessQC)
+
+	// RETURN & CHART
+	auth.GET("/return", h.WMS.GetReturn)
+	auth.GET("/chart/transactions", h.WMS.GetTransactionChart)
 }

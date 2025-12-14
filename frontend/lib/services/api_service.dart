@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = "http://localhost:8081";
@@ -9,7 +10,9 @@ class ApiService {
     final url = Uri.parse("$baseUrl/ping");
 
     try {
+      print('🏓 Testing ping to: $url');
       final response = await http.get(url);
+      print('🏓 Ping response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -18,6 +21,7 @@ class ApiService {
         return "Server error: ${response.statusCode}";
       }
     } catch (e) {
+      print('🏓 Ping error: $e');
       return "Error: $e";
     }
   }
@@ -27,7 +31,8 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/user/user");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -62,6 +67,11 @@ class ApiService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        // Simpan token ke SharedPreferences
+        if (data['token'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', data['token']);
+        }
         return data;
       } else {
         throw Exception(data["error"] ?? "Login gagal");
@@ -82,9 +92,10 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/user/user");
 
     try {
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode({
           "email": email,
           "username": username,
@@ -113,9 +124,10 @@ class ApiService {
   }) async {
     final url = Uri.parse('$baseUrl/api/user/update');
 
+    final headers = await _getHeaders();
     final response = await http.put(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: headers,
       body: jsonEncode({"idUser": idUser, "role_gudang": roleGudang}),
     );
 
@@ -130,13 +142,30 @@ class ApiService {
   Future<bool> deleteUser(int idUser) async {
     final url = Uri.parse('$baseUrl/api/user/delete/$idUser');
 
-    final response = await http.delete(url);
+    final headers = await _getHeaders();
+    final response = await http.delete(url, headers: headers);
 
     if (response.statusCode == 200) {
       return true;
     } else {
       throw Exception("Gagal hapus user");
     }
+  }
+
+  // Helper untuk mendapatkan token
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  // Helper untuk membuat headers dengan token
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _getToken();
+    final headers = {"Content-Type": "application/json"};
+    if (token != null) {
+      headers["Authorization"] = "Bearer $token";
+    }
+    return headers;
   }
 
   // GET INBOUND LIST
@@ -148,7 +177,13 @@ class ApiService {
     final url = Uri.parse(urlString);
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      print('🔑 Headers: $headers');
+      print('🌐 URL: $urlString');
+      
+      final response = await http.get(url, headers: headers);
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -167,9 +202,10 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/inbound/create");
 
     try {
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode(data),
       );
 
@@ -190,7 +226,8 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/produk/list");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -209,7 +246,8 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/gudang/list");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -228,7 +266,8 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/satuan/list");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -250,9 +289,10 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/produk/create");
 
     try {
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode({
           "kode_produk": kodeProduk,
           "nama_produk": namaProduk,
@@ -274,9 +314,10 @@ class ApiService {
   final url = Uri.parse("$baseUrl/api/gudang/create");
 
   try {
+    final headers = await _getHeaders();
     final response = await http.post(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: headers,
       body: jsonEncode({
         "nama_gudang": namaGudang,
         "alamat": alamat,
@@ -299,9 +340,10 @@ class ApiService {
   final url = Uri.parse("$baseUrl/api/gudang/update/$idGudang");
 
   try {
+    final headers = await _getHeaders();
     final response = await http.put(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: headers,
       body: jsonEncode({
         "nama_gudang": namaGudang,
         "alamat": alamat,
@@ -320,7 +362,8 @@ Future<bool> deleteGudang(int idGudang) async {
   final url = Uri.parse("$baseUrl/api/gudang/delete/$idGudang");
 
   try {
-    final response = await http.delete(url);
+    final headers = await _getHeaders();
+    final response = await http.delete(url, headers: headers);
 
     return response.statusCode == 200;
   } catch (e) {
@@ -338,7 +381,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse(urlString);
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -356,9 +400,10 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/outbound/postOutbound");
 
     try {
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode(data),
       );
 
@@ -379,7 +424,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/gudang/user?user_id=$userId");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -398,7 +444,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/inventory/list?gudang_id=$gudangId");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -417,7 +464,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/quality-control?gudang_id=$gudangId");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -440,7 +488,8 @@ Future<bool> deleteGudang(int idGudang) async {
     );
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -461,9 +510,10 @@ Future<bool> deleteGudang(int idGudang) async {
       print('🔍 Sending to: $url');
       print('🔍 Payload: $payload');
 
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode(payload),
       );
 
@@ -486,7 +536,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/inventory/detail/$inventoryId");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -509,9 +560,10 @@ Future<bool> deleteGudang(int idGudang) async {
       print('🔍 Updating order status: $idOrder to $status');
       print('🔍 URL: $url');
       
+      final headers = await _getHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode({"status": status}),
       );
 
@@ -526,7 +578,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/inventory/all");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -556,9 +609,10 @@ Future<bool> deleteGudang(int idGudang) async {
       print('🔍 Sending to: $url');
       print('🔍 Payload: $payload');
 
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode(payload),
       );
 
@@ -578,9 +632,10 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/quality-control/process");
 
     try {
+      final headers = await _getHeaders();
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: headers,
         body: jsonEncode(payload),
       );
 
@@ -600,7 +655,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse("$baseUrl/api/return?gudang_id=$gudangId");
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -622,7 +678,8 @@ Future<bool> deleteGudang(int idGudang) async {
     final url = Uri.parse(urlString);
 
     try {
-      final response = await http.get(url);
+      final headers = await _getHeaders();
+      final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

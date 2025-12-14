@@ -19,6 +19,8 @@ class _InboundPageState extends State<InboundPage> {
   @override
   void initState() {
     super.initState();
+    // Inisialisasi dengan Future kosong untuk mencegah LateInitializationError
+    futureInbound = Future.value([]);
     _loadUserData();
   }
 
@@ -121,8 +123,8 @@ class _InboundPageState extends State<InboundPage> {
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        "Kode Produk: ${item["kode_produk"]}\n"
-                                        "Nama Produk: ${item["nama_produk"]}",
+                                        "Kode Produk: ${item["kode_produk"] ?? "-"}\n"
+                                        "Nama Produk: ${item["nama_produk"] ?? "-"}",
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -191,7 +193,7 @@ class _InboundPageState extends State<InboundPage> {
   }
 
   // Widget info lebih rapih & responsif
-  Widget _infoText(String title, String value) {
+  Widget _infoText(String title, dynamic value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: RichText(
@@ -203,7 +205,7 @@ class _InboundPageState extends State<InboundPage> {
           ),
           children: [
             TextSpan(
-              text: value.toString(),
+              text: (value ?? "-").toString(),
               style: const TextStyle(
                 fontWeight: FontWeight.normal,
               ),
