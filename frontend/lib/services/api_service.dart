@@ -73,7 +73,7 @@ class ApiService {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('token', data['token']);
             print('🔐 Token saved: ${data['token'].substring(0, 20)}...');
-            
+
             // Verify token tersimpan
             final savedToken = prefs.getString('token');
             print('✅ Token verified: ${savedToken?.substring(0, 20)}...');
@@ -168,14 +168,14 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     if (token != null) {
-    } else {
-    }
+    } else {}
     return token;
   }
 
   // Set token manual untuk testing
   Future<void> setAdminToken() async {
-    const adminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5OTksInJvbGUiOjk5LCJleHAiOjE3NjU3NzQ2NTh9.8noNqaoG342-aDcGBDFm7Enz7rEqpQrASahVxAaxsO0";
+    const adminToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5OTksInJvbGUiOjk5LCJleHAiOjE3NjU3NzQ2NTh9.8noNqaoG342-aDcGBDFm7Enz7rEqpQrASahVxAaxsO0";
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', adminToken);
     print('🔐 Admin token set manually');
@@ -185,14 +185,14 @@ class ApiService {
   Future<Map<String, String>> _getHeaders() async {
     var token = await _getToken();
     final headers = {"Content-Type": "application/json"};
-    
+
     // Jika tidak ada token, set token admin otomatis
     if (token == null) {
       print('🔄 No token found, setting admin token automatically...');
       await setAdminToken();
       token = await _getToken();
     }
-    
+
     if (token != null) {
       headers["Authorization"] = "Bearer $token";
     } else {
@@ -213,7 +213,7 @@ class ApiService {
       final headers = await _getHeaders();
       print('🔑 Headers: $headers');
       print('🌐 URL: $urlString');
-      
+
       final response = await http.get(url, headers: headers);
       print('📡 Response status: ${response.statusCode}');
 
@@ -333,10 +333,8 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return data["data"] ?? {
-          "kode_produk": kodeProduk,
-          "nama_produk": namaProduk,
-        };
+        return data["data"] ??
+            {"kode_produk": kodeProduk, "nama_produk": namaProduk};
       } else {
         print("ERROR CREATE PRODUK: ${response.body}");
         return null;
@@ -349,80 +347,71 @@ class ApiService {
 
   // CREATE GUDANG
   Future<Map<String, dynamic>?> createGudang({
-  required String namaGudang,
-  required String alamat,
-}) async {
-  final url = Uri.parse("$baseUrl/api/gudang/create");
+    required String namaGudang,
+    required String alamat,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/gudang/create");
 
-  try {
-    final headers = await _getHeaders();
-    final response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode({
-        "nama_gudang": namaGudang,
-        "alamat": alamat,
-      }),
-    );
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamat}),
+      );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      return data["data"] ?? {
-        "nama_gudang": namaGudang,
-        "alamat": alamat,
-      };
-    } else {
-      print("ERROR CREATE GUDANG: ${response.body}");
-      return null;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? {"nama_gudang": namaGudang, "alamat": alamat};
+      } else {
+        print("ERROR CREATE GUDANG: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("ERROR API CREATE GUDANG: $e");
+      rethrow;
     }
-  } catch (e) {
-    print("ERROR API CREATE GUDANG: $e");
-    rethrow;
   }
-}
 
   // UPDATE GUDANG
   Future<bool> updateGudang({
-  required int idGudang,
-  required String namaGudang,
-  required String alamat,
-}) async {
-  final url = Uri.parse("$baseUrl/api/gudang/update/$idGudang");
+    required int idGudang,
+    required String namaGudang,
+    required String alamat,
+  }) async {
+    final url = Uri.parse("$baseUrl/api/gudang/update/$idGudang");
 
-  try {
-    final headers = await _getHeaders();
-    final response = await http.put(
-      url,
-      headers: headers,
-      body: jsonEncode({
-        "nama_gudang": namaGudang,
-        "alamat": alamat,
-      }),
-    );
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: jsonEncode({"nama_gudang": namaGudang, "alamat": alamat}),
+      );
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print("ERROR API UPDATE GUDANG: $e");
-    rethrow;
+      return response.statusCode == 200;
+    } catch (e) {
+      print("ERROR API UPDATE GUDANG: $e");
+      rethrow;
+    }
   }
-}
 
-// DELETE GUDANG
-Future<bool> deleteGudang(int idGudang) async {
-  final url = Uri.parse("$baseUrl/api/gudang/delete/$idGudang");
+  // DELETE GUDANG
+  Future<bool> deleteGudang(int idGudang) async {
+    final url = Uri.parse("$baseUrl/api/gudang/delete/$idGudang");
 
-  try {
-    final headers = await _getHeaders();
-    final response = await http.delete(url, headers: headers);
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(url, headers: headers);
 
-    return response.statusCode == 200;
-  } catch (e) {
-    print("ERROR API DELETE GUDANG: $e");
-    rethrow;
+      return response.statusCode == 200;
+    } catch (e) {
+      print("ERROR API DELETE GUDANG: $e");
+      rethrow;
+    }
   }
-}
 
-// OUTBOUND
+  // OUTBOUND
   Future<List<dynamic>> getOutbound({int? userId}) async {
     String urlString = "$baseUrl/api/outbound/getOutbound";
     if (userId != null) {
@@ -529,8 +518,6 @@ Future<bool> deleteGudang(int idGudang) async {
     }
   }
 
-
-
   // GET INVENTORY BY WAREHOUSE — FIXED
   Future<List<dynamic>> getInventoryByWarehouse(int idGudang) async {
     final url = Uri.parse(
@@ -609,7 +596,7 @@ Future<bool> deleteGudang(int idGudang) async {
     try {
       print('🔍 Updating order status: $idOrder to $status');
       print('🔍 URL: $url');
-      
+
       final headers = await _getHeaders();
       final response = await http.put(
         url,
@@ -739,6 +726,39 @@ Future<bool> deleteGudang(int idGudang) async {
       }
     } catch (e) {
       print("ERROR API GET CHART: $e");
+      rethrow;
+    }
+  }
+
+  Future<List<dynamic>> getTransactionDetail({
+    required int monthIndex, // 0 - 11
+    required String type, // inbound / outbound
+    String? year,
+  }) async {
+    final month = monthIndex + 1;
+
+    String urlString =
+        "$baseUrl/api/chart/transactions/detail?month=$month&type=$type";
+
+    if (year != null) {
+      urlString += "&year=$year";
+    }
+
+    final url = Uri.parse(urlString);
+
+    try {
+      final headers = await _getHeaders(); // 🔥 INI PENTING
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["data"] ?? [];
+      } else {
+        print("❌ ERROR ${response.statusCode}: ${response.body}");
+        throw Exception("Gagal memuat data transaksi");
+      }
+    } catch (e) {
+      print("❌ ERROR API TRANSACTION DETAIL: $e");
       rethrow;
     }
   }

@@ -272,12 +272,12 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 		Preload("Produk").
 		Preload("GudangAsal").
 		Preload("GudangTujuan")
-	
+
 	// Admin (role 99) bisa lihat semua, user biasa hanya gudang mereka
 	if role != 99 {
 		query = query.Where("gudang_tujuan = ?", user.RoleGudang)
 	}
-	
+
 	result := query.Find(&inboundStocks)
 
 	if result.Error != nil {
@@ -1391,5 +1391,40 @@ func (h *WMSHandler) GetTransactionChart(c *gin.Context) {
 		"message": "Chart data retrieved successfully",
 		"year":    year,
 		"data":    chartData,
+	})
+}
+
+func (h *WMSHandler) GetTransactionDetail(c *gin.Context) {
+	month := c.Query("month")
+	year := c.DefaultQuery("year", fmt.Sprintf("%d", time.Now().Year()))
+	txType := c.Query("type") // inbound / outbound
+
+	if month == "" || txType == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "month and type are required"})
+		return
+	}
+
+	var orders []models.Orders
+
+	query := h.db.
+		Preload("Produk").
+		Preload("GudangAsal").
+		Preload("GudangTujuan").
+		Where("MONTH(tgl) = ? AND YEAR(tgl) = ?", month, year)
+
+	if txType == "outbound" {
+		query = query.Where("status = 'outbound'")
+	} else {
+		query = query.Where("(status != 'outbound' OR status IS NULL)")
+	}
+
+	if err := query.Order("tgl DESC").Find(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Transaction detail retrieved",
+		"data":    orders,
 	})
 }

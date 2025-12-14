@@ -5,6 +5,7 @@ import 'register.dart';
 import 'login.dart';
 import 'admin_inventory.dart';
 import 'admin_gudang.dart';
+import 'detail_chart.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -137,98 +138,101 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
             // Content ----------------------------------------------------------
             Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Welcome, Admin",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7B1E1E),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Manage your warehouse and users from this dashboard.",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 30),
-
-                  Row(
-                    children: [
-                      _infoCard(
-                        "Total Users",
-                        isLoading ? "..." : totalUsers.toString(),
-                      ),
-                      _infoCard("Total Inventory", "1,204"),
-                      _infoCard("Inbound Today", "18"),
-                      _infoCard("Outbound Today", "12"),
-                    ],
-                  ),
-
-                  const SizedBox(height: 40),
-
-                 Container(
-                height: 520, // ← naikkan tinggi container
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20), // ← kurangi padding bawah
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
+              child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Statistik Transaksi Bulanan",
+                      "Welcome, Admin",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF7B1E1E),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: FutureBuilder<Map<String, dynamic>>(
-                            future: apiService.getTransactionChart(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              if (!snapshot.hasData) {
-                                return const Center(
-                                  child: Text("Tidak ada data chart"),
-                                );
-                              }
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Manage your warehouse and users from this dashboard.",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 30),
 
-                              final chartData = snapshot.data!['data'] as List;
-                              return Column(
-                                children: [
-                                  _buildLegend(chartData),
-                                  const SizedBox(height: 20),
-                                  Expanded(child: _buildChart(chartData)),
-                                ],
-                              );
-                            },
-                          ),
+                    Row(
+                      children: [
+                        _infoCard(
+                          "Total Users",
+                          isLoading ? "..." : totalUsers.toString(),
                         ),
+                        _infoCard("Total Inventory", "1,204"),
+                        _infoCard("Inbound Today", "18"),
+                        _infoCard("Outbound Today", "12"),
                       ],
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 40),
+
+                    Container(
+                      height: 520, // ← naikkan tinggi container
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        20,
+                        20,
+                        20,
+                      ), // ← kurangi padding bawah
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 6),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Statistik Transaksi Bulanan",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF7B1E1E),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: FutureBuilder<Map<String, dynamic>>(
+                              future: apiService.getTransactionChart(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                                if (!snapshot.hasData) {
+                                  return const Center(
+                                    child: Text("Tidak ada data chart"),
+                                  );
+                                }
+
+                                final chartData =
+                                    snapshot.data!['data'] as List;
+                                return Column(
+                                  children: [
+                                    _buildLegend(chartData),
+                                    const SizedBox(height: 20),
+                                    Expanded(child: _buildChart(chartData)),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            )
           ],
         ),
       ),
@@ -314,7 +318,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
         maxY: _getMaxY(data),
-        barTouchData: BarTouchData(enabled: false),
+        barTouchData: BarTouchData(
+          enabled: true,
+          handleBuiltInTouches: true,
+          touchCallback: (event, response) {
+            if (event is FlTapUpEvent &&
+                response != null &&
+                response.spot != null) {
+              final groupIndex = response.spot!.touchedBarGroupIndex;
+              final rodIndex = response.spot!.touchedRodDataIndex;
+
+              final monthIndex = groupIndex; // 0=Jan, 1=Feb, dst
+              final type = rodIndex == 0 ? 'inbound' : 'outbound';
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      DetailChart(monthIndex: monthIndex, type: type),
+                ),
+              );
+            }
+          },
+        ),
+
         titlesData: FlTitlesData(
           show: true,
           bottomTitles: AxisTitles(
@@ -380,7 +407,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     // Hitung total inbound dan outbound
     int totalInbound = 0;
     int totalOutbound = 0;
-    
+
     for (var item in data) {
       totalInbound += (item['inbound'] ?? 0) as int;
       totalOutbound += (item['outbound'] ?? 0) as int;
@@ -410,10 +437,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SizedBox(width: 8),
         Text(
           "$label: $total",
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ],
     );
