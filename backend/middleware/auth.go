@@ -12,7 +12,6 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		fmt.Printf("🔐 Auth Header: %s\n", authHeader)
 
 		if authHeader == "" {
 			c.JSON(401, gin.H{"error": "Authorization header kosong"})
@@ -21,8 +20,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
-		fmt.Printf("🔑 Token: %s\n", tokenString)
-
 		// Gunakan ValidateJWT dari utils
 		claims, err := utils.ValidateJWT(tokenString)
 		if err != nil {

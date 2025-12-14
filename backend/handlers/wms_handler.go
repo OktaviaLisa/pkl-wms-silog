@@ -62,8 +62,7 @@ func (h *WMSHandler) Login(c *gin.Context) {
 	}
 
 	if loginData.Username == "admin" && loginData.Password == "admin123" {
-		// Bisa pakai IDUser = 0 atau 1, role = misal 99 untuk admin
-		token, err := utils.GenerateJWT(0, 99)
+		token, err := utils.GenerateJWT(999, 99) // UserID 999 untuk admin
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal generate token"})
 			return
@@ -72,8 +71,8 @@ func (h *WMSHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message":     "Login admin berhasil",
 			"token":       token,
-			"user":        gin.H{"IDUser": 0, "Username": "admin", "RoleGudang": 99},
-			"nama_gudang": "",
+			"user":        gin.H{"IDUser": 999, "Username": "admin", "RoleGudang": 99},
+			"nama_gudang": "Admin",
 		})
 		return
 	}
@@ -252,27 +251,34 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	fmt.Println("UserID JWT:", userID)
 	fmt.Println("Role JWT:", role)
 
-	// 🔐 VALIDASI JWT
+	// 🔐 VALIDASI JWT - Admin hardcode memiliki userID 999 dan role 99
 	if userID == 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Ambil user
+	// Ambil user (skip untuk admin hardcode)
 	var user models.Users
-	if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
-		return
+	if userID != 999 {
+		if err := h.db.Where("idUser = ?", userID).First(&user).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+			return
+		}
 	}
 
-	// Filter inbound sesuai gudang user
+	// Filter inbound sesuai gudang user, kecuali admin (role 99)
 	var inboundStocks []models.Orders
-	result := h.db.
+	query := h.db.
 		Preload("Produk").
 		Preload("GudangAsal").
-		Preload("GudangTujuan").
-		Where("gudang_tujuan = ?", user.RoleGudang).
-		Find(&inboundStocks)
+		Preload("GudangTujuan")
+	
+	// Admin (role 99) bisa lihat semua, user biasa hanya gudang mereka
+	if role != 99 {
+		query = query.Where("gudang_tujuan = ?", user.RoleGudang)
+	}
+	
+	result := query.Find(&inboundStocks)
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})

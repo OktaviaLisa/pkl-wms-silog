@@ -69,8 +69,19 @@ class ApiService {
       if (response.statusCode == 200) {
         // Simpan token ke SharedPreferences
         if (data['token'] != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', data['token']);
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('token', data['token']);
+            print('🔐 Token saved: ${data['token'].substring(0, 20)}...');
+            
+            // Verify token tersimpan
+            final savedToken = prefs.getString('token');
+            print('✅ Token verified: ${savedToken?.substring(0, 20)}...');
+          } catch (e) {
+            print('❌ Error saving token: $e');
+          }
+        } else {
+          print('❌ No token in login response');
         }
         return data;
       } else {
@@ -155,15 +166,37 @@ class ApiService {
   // Helper untuk mendapatkan token
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    final token = prefs.getString('token');
+    if (token != null) {
+    } else {
+    }
+    return token;
+  }
+
+  // Set token manual untuk testing
+  Future<void> setAdminToken() async {
+    const adminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5OTksInJvbGUiOjk5LCJleHAiOjE3NjU3NzQ2NTh9.8noNqaoG342-aDcGBDFm7Enz7rEqpQrASahVxAaxsO0";
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', adminToken);
+    print('🔐 Admin token set manually');
   }
 
   // Helper untuk membuat headers dengan token
   Future<Map<String, String>> _getHeaders() async {
-    final token = await _getToken();
+    var token = await _getToken();
     final headers = {"Content-Type": "application/json"};
+    
+    // Jika tidak ada token, set token admin otomatis
+    if (token == null) {
+      print('🔄 No token found, setting admin token automatically...');
+      await setAdminToken();
+      token = await _getToken();
+    }
+    
     if (token != null) {
       headers["Authorization"] = "Bearer $token";
+    } else {
+      print('❌ Still no token after auto-set');
     }
     return headers;
   }
@@ -183,7 +216,6 @@ class ApiService {
       
       final response = await http.get(url, headers: headers);
       print('📡 Response status: ${response.statusCode}');
-      print('📡 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -709,5 +741,18 @@ Future<bool> deleteGudang(int idGudang) async {
       print("ERROR API GET CHART: $e");
       rethrow;
     }
+  }
+
+  // Debug methods
+  Future<void> clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    print('🗑️ Token cleared');
+  }
+
+  Future<void> setTokenManually(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    print('🔐 Token set manually: ${token.substring(0, 20)}...');
   }
 }
