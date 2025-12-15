@@ -116,7 +116,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
 
                   _sidebarItem(
-                    Icons.door_back_door,
+                   Icons.domain,
                     'Gudang',
                     onTap: () {
                       Navigator.push(
@@ -169,7 +169,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Welcome, Admin",
+                      "Selamat Datang, Admin",
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -178,7 +178,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "Manage your warehouse and users from this dashboard.",
+                      "Kelola warehouse logistik Anda secara terpusat.",
                       style: TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 30),
