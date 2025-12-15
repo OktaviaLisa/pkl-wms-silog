@@ -231,8 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         SizedBox(height: 15),
         Text(
-          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
-          'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s',
+          'Sistem Manajemen Gudang terintegrasi untuk membantu mengelola stok, proses penerimaan dan pengeluaran barang secara efisien dan real-time.',
           style: TextStyle(
             fontSize: 16,
             color: Colors.black87,
