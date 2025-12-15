@@ -145,10 +145,16 @@ class DetailInboundPage extends StatelessWidget {
                     await SharedPreferences.getInstance();
                 final gudangId = prefs.getInt('role_gudang');
 
+                print('🔍 Debug data inbound:');
+                print('idOrders: ${data['idOrders']}');
+                print('idProduk: ${data['idProduk']}');
+                print('volume: ${data['volume']}');
+                print('gudangId: $gudangId');
+                
                 final payload = {
-                  "idProduk": data['idProduk'] ?? data['id_produk'],
+                  "idProduk": data['idProduk'],
                   "idGudang": gudangId,
-                  "volume": data['volume'] ?? 1,
+                  "volume": data['volume'],
                 };
 
                 final api = ApiService();

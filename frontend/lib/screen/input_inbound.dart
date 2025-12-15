@@ -523,7 +523,7 @@ class _InputInboundPageState extends State<InputInboundPage> {
                     ),
                     onPressed: _submitInbound,
                     child: const Text(
-                      'Simpan Outbound',
+                      'Simpan Inbound',
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),

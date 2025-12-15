@@ -289,6 +289,7 @@ func (h *WMSHandler) GetInboundStock(c *gin.Context) {
 	for _, item := range inboundStocks {
 		response = append(response, map[string]interface{}{
 			"idOrders":           item.IdOrders,
+			"idProduk":           item.IdProduk,
 			"kode_produk":        item.Produk.KodeProduk,
 			"nama_produk":        item.Produk.NamaProduk,
 			"volume":             item.Volume,
@@ -905,6 +906,10 @@ func (h *WMSHandler) AddInventory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	fmt.Printf("IdProduk: %d\n", input.IdProduk)
+	fmt.Printf("IdGudang: %d\n", input.IdGudang)
+	fmt.Printf("Volume: %d\n", input.Volume)
 
 	var inventory models.Inventory
 	err := h.db.Where("idProduk = ? AND idGudang = ?", input.IdProduk, input.IdGudang).
