@@ -15,11 +15,19 @@ type JWTClaims struct {
 }
 
 func GenerateJWT(userID uint, role int) (string, error) {
+	var expiry time.Time
+	
+	if role == 99 { // Admin
+		expiry = time.Now().Add(100 * 365 * 24 * time.Hour) // 100 tahun
+	} else { // User biasa
+		expiry = time.Now().Add(24 * time.Hour) // 24 jam
+	}
+	
 	claims := JWTClaims{
 		UserID: userID,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(expiry),
 		},
 	}
 

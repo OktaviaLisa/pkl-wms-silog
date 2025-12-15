@@ -21,11 +21,6 @@ class _LoginPageState extends State<LoginPage> {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
 
-    if (username == "admin" && password == "admin123") {
-      Navigator.pushReplacementNamed(context, '/admin_dashboard');
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {
@@ -34,17 +29,23 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
-      if (result["message"] == "Login berhasil") {
+      if (result["message"] == "Login berhasil" || result["message"] == "Login admin berhasil") {
         // Simpan user ID ke SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('user_id', result['user']['idUser']);
-        await prefs.setString('username', result['user']['username']);
+        await prefs.setInt('user_id', result['user']['idUser'] ?? result['user']['IDUser']);
+        await prefs.setString('username', result['user']['username'] ?? result['user']['Username']);
         await prefs.setString('nama_gudang', result['nama_gudang'] ?? '');
-        await prefs.setInt('role_gudang', result['user']['role_gudang'] ?? 0);
+        await prefs.setInt('role_gudang', result['user']['role_gudang'] ?? result['user']['RoleGudang'] ?? 0);
         
-        print('✅ User login berhasil: ID=${result['user']['idUser']}, Username=${result['user']['username']}, Role Gudang=${result['user']['role_gudang']}');
+        print('✅ Login berhasil: ID=${result['user']['idUser'] ?? result['user']['IDUser']}, Username=${result['user']['username'] ?? result['user']['Username']}, Role=${result['user']['role_gudang'] ?? result['user']['RoleGudang']}');
         
-        Navigator.pushReplacementNamed(context, '/dashboard_user');
+        // Redirect berdasarkan role
+        int role = result['user']['role_gudang'] ?? result['user']['RoleGudang'] ?? 0;
+        if (role == 99) {
+          Navigator.pushReplacementNamed(context, '/admin_dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/dashboard_user');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Username atau Password salah!")),

@@ -18,12 +18,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final ApiService apiService = ApiService();
 
   int totalUsers = 0;
+  int totalProduk = 0;
+  int totalGudang = 0;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     fetchTotalUsers();
+    fetchTotalProduk();
+    fetchTotalGudang();
   }
 
   Future<void> fetchTotalUsers() async {
@@ -36,6 +40,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
     } catch (e) {
       setState(() => isLoading = false);
       print("Error fetch users: $e");
+    }
+  }
+
+  Future<void> fetchTotalProduk() async {
+    try {
+      final produk = await apiService.getProduk();
+      setState(() {
+        totalProduk = produk.length;
+      });
+    } catch (e) {
+      print("Error fetch produk: $e");
+    }
+  }
+
+  Future<void> fetchTotalGudang() async {
+    try {
+      final gudang = await apiService.getGudang();
+      setState(() {
+        totalGudang = gudang.length;
+      });
+    } catch (e) {
+      print("Error fetch gudang: $e");
     }
   }
 
@@ -163,9 +189,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           "Total Users",
                           isLoading ? "..." : totalUsers.toString(),
                         ),
-                        _infoCard("Total Inventory", "1,204"),
-                        _infoCard("Inbound Today", "18"),
-                        _infoCard("Outbound Today", "12"),
+                        _infoCard(
+                          "Total Produk",
+                          isLoading ? "..." : totalProduk.toString(),
+                        ),
+                        _infoCard(
+                          "Total Gudang",
+                          isLoading ? "..." : totalGudang.toString(),
+                        ),
                       ],
                     ),
 
@@ -208,14 +239,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     child: CircularProgressIndicator(),
                                   );
                                 }
+                                if (snapshot.hasError) {
+                                  print("Chart error: ${snapshot.error}");
+                                  return const Center(
+                                    child: Text("Error loading chart"),
+                                  );
+                                }
                                 if (!snapshot.hasData) {
                                   return const Center(
                                     child: Text("Tidak ada data chart"),
                                   );
                                 }
 
+                                print("Chart data received: ${snapshot.data}");
                                 final chartData =
                                     snapshot.data!['data'] as List;
+                                print("Parsed chart data: $chartData");
                                 return Column(
                                   children: [
                                     _buildLegend(chartData),
