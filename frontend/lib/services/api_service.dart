@@ -81,7 +81,6 @@ class ApiService {
             print('❌ Error saving token: $e');
           }
         } else {
-          print('❌ No token in login response');
         }
         return data;
       } else {
@@ -178,7 +177,6 @@ class ApiService {
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5OTksInJvbGUiOjk5LCJleHAiOjE3NjU3NzQ2NTh9.8noNqaoG342-aDcGBDFm7Enz7rEqpQrASahVxAaxsO0";
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', adminToken);
-    print('🔐 Admin token set manually');
   }
 
   // Helper untuk membuat headers dengan token
@@ -188,7 +186,6 @@ class ApiService {
 
     // Jika tidak ada token, set token admin otomatis
     if (token == null) {
-      print('🔄 No token found, setting admin token automatically...');
       await setAdminToken();
       token = await _getToken();
     }
@@ -212,10 +209,8 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       print('🔑 Headers: $headers');
-      print('🌐 URL: $urlString');
-
+    
       final response = await http.get(url, headers: headers);
-      print('📡 Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -544,8 +539,6 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/inventory/add");
 
     try {
-      print('🔍 Sending to: $url');
-      print('🔍 Payload: $payload');
 
       final headers = await _getHeaders();
       final response = await http.post(
@@ -594,9 +587,7 @@ class ApiService {
     final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
 
     try {
-      print('🔍 Updating order status: $idOrder to $status');
-      print('🔍 URL: $url');
-
+  
       final headers = await _getHeaders();
       final response = await http.put(
         url,
@@ -643,9 +634,7 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/quality-control/add");
 
     try {
-      print('🔍 Sending to: $url');
-      print('🔍 Payload: $payload');
-
+    
       final headers = await _getHeaders();
       final response = await http.post(
         url,

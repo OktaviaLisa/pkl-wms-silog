@@ -109,7 +109,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
                   controller: goodController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Qty Good',
+                    labelText: 'Kuantitas Baik',
                     border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => setModalState(() => errorText = null),
@@ -119,7 +119,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
                   controller: badController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Qty Bad',
+                    labelText: 'Kuantitas Buruk',
                     border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => setModalState(() => errorText = null),

@@ -1289,8 +1289,6 @@ func (h *WMSHandler) GetReturn(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("🔍 GetReturn dipanggil dengan gudang_id: %s\n", gudangID)
-
 	type ReturnResponse struct {
 		IdReturn   int       `json:"id_return"`
 		NamaProduk string    `json:"nama_produk"`

@@ -21,9 +21,6 @@ class _OutboundPageState extends State<OutboundPage> {
   void _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     currentUserId = prefs.getInt('user_id');
-
-    print('🔍 Loading outbound data untuk user ID: $currentUserId');
-
     if (currentUserId != null) {
       loadOutbound();
     } else {

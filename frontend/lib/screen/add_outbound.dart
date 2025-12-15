@@ -165,7 +165,6 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
     );
 
     if (produk != null) {
-      print('🔍 Data produk: $produk');
       final nama = _extractString(produk, [
         'nama_produk',
         'namaProduk',
@@ -175,8 +174,6 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
       String sat =
           _extractString(produk, ['jenis_satuan', 'jenisSatuan']) ??
           _getSatuanName(_extractInt(produk, ['id_satuan', 'idSatuan']));
-
-      print('📦 Jenis satuan: $sat');
 
       setState(() {
         selectedProduk = produkId;

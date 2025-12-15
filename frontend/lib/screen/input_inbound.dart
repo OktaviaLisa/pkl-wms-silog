@@ -135,10 +135,6 @@ class _InputInboundPageState extends State<InputInboundPage> {
   String finalKodeProduk = kodeProdukController.text.trim();
   String finalNamaProduk = namaProdukController.text.trim();
   
-  print("=== DEBUG INPUT MANUAL ===");
-  print("isManualProduk: $isManualProduk");
-  print("Input kode produk: $finalKodeProduk");
-  print("Input nama produk: $finalNamaProduk");
   
   // Jika input manual → buat produk baru dan dapatkan data yang benar
   if (isManualProduk) {
@@ -192,11 +188,6 @@ class _InputInboundPageState extends State<InputInboundPage> {
     "deskripsi": deskripsiController.text.trim(),
   };
   
-  print("=== DATA FINAL ===");
-  print("Data yang akan dikirim: $data");
-  print("Kode produk final: $finalKodeProduk");
-  print("Nama produk final: $finalNamaProduk");
-  print("==================");
       final success = await api.createInbound(data);
       if (success == true) {
       ScaffoldMessenger.of(context).showSnackBar(
