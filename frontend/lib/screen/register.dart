@@ -150,34 +150,67 @@ class _RegisterPageState extends State<RegisterPage> {
   //      POPUP HAPUS USER
  
   void confirmDeleteUser(int idUser) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Yakin ingin menghapus?"),
-          content: const Text("User akan terhapus permanen."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await apiService.deleteUser(idUser);
-                Navigator.pop(context);
-                fetchUsers();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+  showDialog(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Container(
+          width: 420, // ⬅ SAMA DENGAN EDIT USER
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Hapus User",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF7B1E1E),
+                ),
               ),
-              child: const Text("Hapus"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+              const SizedBox(height: 20),
+
+              const Text(
+                "Apakah kamu yakin ingin menghapus user ini?\n"
+                "Tindakan ini tidak dapat dibatalkan.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15),
+              ),
+
+              const SizedBox(height: 24),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    child: const Text("Batal"),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7B1E1E), // ⬅ SAMA DENGAN EDIT
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Hapus"),
+                    onPressed: () async {
+                      await apiService.deleteUser(idUser);
+                      Navigator.pop(context);
+                      fetchUsers();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
 
   //     CREATE USER 
