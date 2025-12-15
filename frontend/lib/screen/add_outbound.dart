@@ -329,7 +329,6 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
             content: Text(
               'Outbound berhasil ditambahkan! Stok inventory telah diperbarui.',
             ),
-            backgroundColor: Colors.green,
           ),
         );
         // Return true untuk trigger refresh di halaman sebelumnya
@@ -518,40 +517,28 @@ class _AddOutboundPageState extends State<AddOutboundPage> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: gudangTujuanController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: 'Masukkan nama gudang tujuan',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.arrow_drop_down),
-                        onSelected: (value) {
-                          setState(() {
-                            gudangTujuanController.text = value;
-                          });
-                        },
-                        itemBuilder: (ctx) {
-                          return gudangList.map((item) {
-                            final name = _extractString(item, [
-                              'nama_gudang',
-                              'namaGudang',
-                              'nama',
-                            ]);
-                            return PopupMenuItem<String>(
-                              value: name ?? '',
-                              child: Text(name ?? '-'),
-                            );
-                          }).toList();
-                        },
-                      ),
-                    ],
+                  DropdownButtonFormField<String>(
+                    value: gudangTujuanController.text.isEmpty ? null : gudangTujuanController.text,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Pilih gudang tujuan',
+                    ),
+                    items: gudangList.map<DropdownMenuItem<String>>((gudang) {
+                      final name = _extractString(gudang, [
+                        'nama_gudang',
+                        'namaGudang',
+                        'nama',
+                      ]);
+                      return DropdownMenuItem<String>(
+                        value: name ?? '',
+                        child: Text(name ?? '-'),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        gudangTujuanController.text = value ?? '';
+                      });
+                    },
                   ),
                   const SizedBox(height: 20),
 

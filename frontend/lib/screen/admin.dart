@@ -251,10 +251,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   );
                                 }
 
-                                print("Chart data received: ${snapshot.data}");
                                 final chartData =
                                     snapshot.data!['data'] as List;
-                                print("Parsed chart data: $chartData");
+                              
                                 return Column(
                                   children: [
                                     _buildLegend(chartData),
