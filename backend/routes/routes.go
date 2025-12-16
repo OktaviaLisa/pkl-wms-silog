@@ -65,4 +65,6 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler) {
 	auth.GET("/return", h.WMS.GetReturn)
 	auth.GET("/chart/transactions", h.WMS.GetTransactionChart)
 	auth.GET("/chart/transactions/detail", h.WMS.GetTransactionDetail)
+	auth.GET("/metabase/inbound-outbound", h.WMS.GetInboundOutboundChart)
+
 }

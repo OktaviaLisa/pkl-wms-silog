@@ -80,8 +80,7 @@ class ApiService {
           } catch (e) {
             print('❌ Error saving token: $e');
           }
-        } else {
-        }
+        } else {}
         return data;
       } else {
         throw Exception(data["error"] ?? "Login gagal");
@@ -209,7 +208,7 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       print('🔑 Headers: $headers');
-    
+
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
@@ -539,7 +538,6 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/inventory/add");
 
     try {
-
       final headers = await _getHeaders();
       final response = await http.post(
         url,
@@ -587,7 +585,6 @@ class ApiService {
     final url = Uri.parse('$baseUrl/api/orders/update-status/$idOrder');
 
     try {
-  
       final headers = await _getHeaders();
       final response = await http.put(
         url,
@@ -634,7 +631,6 @@ class ApiService {
     final url = Uri.parse("$baseUrl/api/quality-control/add");
 
     try {
-    
       final headers = await _getHeaders();
       final response = await http.post(
         url,
@@ -763,5 +759,21 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
     print('🔐 Token set manually: ${token.substring(0, 20)}...');
+  }
+
+  Future<String> getMetabaseChartUrl() async {
+    final token = await _getToken(); // ← Perbaikan: ambil token dengan benar
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/metabase/inbound-outbound'),
+      headers: {'Authorization': 'Bearer ${token ?? ""}'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body); // ← Perbaikan: gunakan jsonDecode
+      return data['embed_url'];
+    } else {
+      throw Exception('Failed to load Metabase chart');
+    }
   }
 }

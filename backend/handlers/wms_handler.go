@@ -1431,3 +1431,21 @@ func (h *WMSHandler) GetTransactionDetail(c *gin.Context) {
 		"data":    orders,
 	})
 }
+
+func (h *WMSHandler) GetInboundOutboundChart(c *gin.Context) {
+	userID := c.GetUint("user_id")
+	role := c.GetInt("role")
+
+	fmt.Println("UserID:", userID)
+	fmt.Println("Role Gudang:", role)
+
+	// Gunakan public URL dari Metabase
+	publicURL := "http://localhost:3000/public/question/fa540f0a-c36c-44c2-ba67-90c08f32b341"
+
+	fmt.Printf("✅ Using Metabase public URL: %s\n", publicURL)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":   "Metabase chart URL berhasil dibuat",
+		"embed_url": publicURL,
+	})
+}
