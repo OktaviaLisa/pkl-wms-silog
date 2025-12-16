@@ -83,8 +83,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         }
 
         // Generate unique view ID untuk iframe
-        final String viewId = 'metabase-iframe-${DateTime.now().millisecondsSinceEpoch}';
-        
+        final String viewId =
+            'metabase-iframe-${DateTime.now().millisecondsSinceEpoch}';
+
         // Register iframe untuk Flutter Web
         ui_web.platformViewRegistry.registerViewFactory(
           viewId,

@@ -218,27 +218,31 @@ class _InboundPageState extends State<InboundPage> {
 
   Color _getStatusColor(String? status) {
     switch (status) {
-      case 'pending':
-        return Colors.blue;
       case 'qc':
         return Colors.orange;
       case 'inventory':
         return Colors.green;
+      case 'outbound':
+        return Colors.red;
+      case null:
+      case '':
       default:
-        return Colors.grey;
+        return Colors.blue; // Belum diproses
     }
   }
 
   String _getStatusText(String? status) {
     switch (status) {
-      case 'pending':
-        return "Pending";
       case 'qc':
-        return "QC";
+        return "Quality Control";
       case 'inventory':
         return "Inventory";
+      case 'outbound':
+        return "Outbound";
+      case null:
+      case '':
       default:
-        return "Unknown";
+        return "Belum Diproses";
     }
   }
 }
